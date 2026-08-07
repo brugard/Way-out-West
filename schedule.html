@@ -1227,6 +1227,8 @@ document.getElementById("exportBtn").addEventListener("click", ()=>{
 });
 
 document.getElementById("importBtn").addEventListener("click", ()=>{
+  const proceed = confirm("Det här skriver över dina nuvarande val. Har du sparat din egen status (↓) om du vill ha kvar den?");
+  if(!proceed) return;
   document.getElementById("importInput").click();
 });
 
