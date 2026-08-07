@@ -1017,7 +1017,7 @@ function renderPage(preserveOffsetPx){
         }
         const artistId = TIDAL_ARTIST_IDS[name];
         if(artistId){
-          openMusicApp(`tidal://artist/${artistId}`, `https://tidal.com/browse/artist/${artistId}`);
+          openMusicApp(`tidal://browse/artist/${artistId}`, `https://tidal.com/browse/artist/${artistId}`);
         } else {
           window.open(`https://tidal.com/search?q=${q}`, "_blank", "noopener");
         }
@@ -1165,56 +1165,7 @@ searchInput.addEventListener("input", ()=>{
 });
 
 // --- Dela schema ---
-function buildShareText(){
-  const SCHEDULE_URL = "https://brugard.github.io/Way-out-West/schedule.html";
-  let out = "Mitt Way Out West & Stay Out West-schema:\n";
-  let anyPicks = false;
-
-  PAGES.forEach(page=>{
-    const best = [];
-    const bra = [];
-    page.cols.forEach(col=>{
-      (page.raw[col]||[]).forEach(([time, name])=>{
-        const k = keyFor(page, col, time, name);
-        const state = localStorage.getItem(k);
-        const line = `${name} (${time}, ${col})`;
-        if(state === "best") best.push(line);
-        else if(state === "bra") bra.push(line);
-      });
-    });
-    if(best.length === 0 && bra.length === 0) return;
-    anyPicks = true;
-    out += `\n${page.dayLabel.toUpperCase()} — ${page.typeLabel}\n`;
-    if(best.length) out += `★★ Bäst: ${best.join(", ")}\n`;
-    if(bra.length) out += `★ Bra: ${bra.join(", ")}\n`;
-  });
-
-  if(!anyPicks){
-    out = "Kolla in mitt Way Out West & Stay Out West-schema:";
-  }
-  out += `\n${SCHEDULE_URL}`;
-  return out;
-}
-
-document.getElementById("shareBtn").addEventListener("click", async ()=>{
-  const text = buildShareText();
-  if(navigator.share){
-    try{
-      await navigator.share({ text });
-    }catch(err){
-      // användaren avbröt delningen, eller så stöds det inte — inget att göra
-    }
-  } else {
-    try{
-      await navigator.clipboard.writeText(text);
-      alert("Kunde inte öppna delningsmenyn på den här enheten, så texten är kopierad istället — klistra in den där du vill dela den.");
-    }catch(err){
-      alert(text);
-    }
-  }
-});
-
-document.getElementById("exportBtn").addEventListener("click", ()=>{
+function buildStatusData(){
   const data = {};
   PAGES.forEach(page=>{
     page.cols.forEach(col=>{
@@ -1226,6 +1177,44 @@ document.getElementById("exportBtn").addEventListener("click", ()=>{
       });
     });
   });
+  return data;
+}
+
+document.getElementById("shareBtn").addEventListener("click", async ()=>{
+  const data = buildStatusData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const file = new File([blob], "wow-sow-status.json", {type:"application/json"});
+  const shareText = "Mitt Way Out West & Stay Out West-schema — läs in filen via ↑ i appen: https://brugard.github.io/Way-out-West/schedule.html";
+
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({ files:[file], text: shareText });
+      return;
+    }catch(err){
+      return; // användaren avbröt delningen
+    }
+  }
+  if(navigator.share){
+    try{
+      await navigator.share({ text: shareText });
+      return;
+    }catch(err){
+      return;
+    }
+  }
+  // sista utväg: ladda ner filen precis som exportknappen
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "wow-sow-status.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const data = buildStatusData();
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
