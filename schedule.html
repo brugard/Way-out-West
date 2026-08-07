@@ -1180,38 +1180,85 @@ function buildStatusData(){
   return data;
 }
 
-document.getElementById("shareBtn").addEventListener("click", async ()=>{
-  const data = buildStatusData();
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
-  const file = new File([blob], "wow-sow-status.txt", {type:"text/plain"});
-  const shareText = "Mitt Way Out West & Stay Out West-schema — läs in filen via ↑ i appen: https://brugard.github.io/Way-out-West/schedule.html";
+// Kodar valen kompakt som sida.kolumn.rad+bokstav (t.ex "0.2.4x"), separerade med
+// kommatecken, istället för en fil — så delningen bara är en vanlig länk som funkar
+// garanterat i alla appar.
+const SHARE_STATE_CHAR = { bra: "b", best: "x" };
+const SHARE_CHAR_STATE = { b: "bra", x: "best" };
 
-  if(navigator.canShare && navigator.canShare({files:[file]})){
+function buildShareCode(){
+  const parts = [];
+  PAGES.forEach((page, pageIdx)=>{
+    page.cols.forEach((col, colIdx)=>{
+      (page.raw[col]||[]).forEach((entry, entryIdx)=>{
+        const [time, name] = entry;
+        const k = keyFor(page, col, time, name);
+        const val = localStorage.getItem(k);
+        if(val && SHARE_STATE_CHAR[val]){
+          parts.push(`${pageIdx}.${colIdx}.${entryIdx}${SHARE_STATE_CHAR[val]}`);
+        }
+      });
+    });
+  });
+  return parts.join(",");
+}
+
+function applyShareCode(code){
+  let applied = 0;
+  code.split(",").forEach(part=>{
+    const m = part.match(/^(\d+)\.(\d+)\.(\d+)([bx])$/);
+    if(!m) return;
+    const [, pageIdxStr, colIdxStr, entryIdxStr, ch] = m;
+    const page = PAGES[+pageIdxStr];
+    if(!page) return;
+    const col = page.cols[+colIdxStr];
+    if(!col) return;
+    const entry = (page.raw[col]||[])[+entryIdxStr];
+    if(!entry) return;
+    const [time, name] = entry;
+    const k = keyFor(page, col, time, name);
+    saveState(k, SHARE_CHAR_STATE[ch]);
+    applied++;
+  });
+  return applied;
+}
+
+document.getElementById("shareBtn").addEventListener("click", async ()=>{
+  const code = buildShareCode();
+  const base = window.location.origin + window.location.pathname;
+  const url = code ? `${base}?share=${code}` : base;
+  const shareText = "Mitt Way Out West & Stay Out West-schema:";
+
+  if(navigator.share){
     try{
-      await navigator.share({ files:[file], text: shareText });
+      await navigator.share({ text: shareText, url });
       return;
     }catch(err){
       return; // användaren avbröt delningen
     }
   }
-  if(navigator.share){
-    try{
-      await navigator.share({ text: shareText });
-      return;
-    }catch(err){
-      return;
-    }
+  try{
+    await navigator.clipboard.writeText(`${shareText} ${url}`);
+    alert("Länken är kopierad — klistra in den där du vill dela den.");
+  }catch(err){
+    prompt("Kopiera länken:", url);
   }
-  // sista utväg: ladda ner filen precis som exportknappen
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "wow-sow-status.json";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 });
+
+// Läser av ?share=... i webbadressen vid start, och frågar om man vill läsa in det.
+(function checkShareLink(){
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("share");
+  if(!code) return;
+  const count = code.split(",").filter(p=>p).length;
+  if(confirm(`Läsa in ${count} delade val? Det här skriver över dina egna om de krockar.`)){
+    applyShareCode(code);
+    renderPage(getCurrentGridOffsetPx());
+  }
+  params.delete("share");
+  const cleanUrl = window.location.pathname + (params.toString() ? "?"+params.toString() : "");
+  window.history.replaceState({}, "", cleanUrl);
+})();
 
 document.getElementById("exportBtn").addEventListener("click", ()=>{
   const data = buildStatusData();
