@@ -290,8 +290,10 @@
   Tryck på en konsert för att växla status · svep vänster/höger för att byta sida
   <div class="footer-btns">
     <button id="exportBtn">Spara till fil</button>
+    <button id="importBtn">Läs in fil</button>
     <button id="resetBtn">Nollställ sidan</button>
   </div>
+  <input type="file" id="importInput" accept="application/json" style="display:none">
 </footer>
 
 <script>
@@ -938,6 +940,28 @@ document.getElementById("exportBtn").addEventListener("click", ()=>{
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+});
+
+document.getElementById("importBtn").addEventListener("click", ()=>{
+  document.getElementById("importInput").click();
+});
+
+document.getElementById("importInput").addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      Object.keys(data).forEach(k=> saveState(k, data[k]));
+      renderPage(null);
+      alert("Status inläst!");
+    }catch(err){
+      alert("Kunde inte läsa filen. Är det rätt fil?");
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
 });
 </script>
 </body>
