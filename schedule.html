@@ -76,7 +76,7 @@
     display:inline-flex; align-items:center; gap:5px;
     font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:20px;
     border:1px solid var(--pink); color:var(--pink); text-decoration:none;
-    margin-left:auto;
+    margin-left:auto; background:none; font-family:'Archivo',sans-serif; cursor:pointer;
   }
   .tidal-pill:active{ background:rgba(255,143,194,.15); }
 
@@ -155,7 +155,7 @@
   .block .mark{ position:absolute; top:2px; right:2px; font-size:7px; }
   .tidal-link{
     position:absolute; bottom:1px; right:2px; font-size:9px; line-height:1;
-    color:inherit; opacity:.55; text-decoration:none; padding:2px;
+    color:inherit; opacity:.55; text-decoration:none; padding:2px; cursor:pointer;
   }
   .tidal-link:active{ opacity:1; }
 
@@ -242,7 +242,7 @@
     <span class="n"><i></i>Neutral</span>
     <span class="b"><i></i>Bra</span>
     <span class="best"><i></i>Bäst</span>
-    <a id="tidalLink" class="tidal-pill" href="#" target="_blank" rel="noopener">♫ Spellista</a>
+    <button id="tidalLink" class="tidal-pill">♫ Spellista</button>
   </div>
 </header>
 
@@ -637,9 +637,32 @@ function buildZoneGradient(page, totalH){
 }
 
 const TIDAL_LINKS = {
-  wow: "https://tidal.com/playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
-  sow: "https://tidal.com/playlist/f9a499b1-377f-43de-9b9b-078bf50f388a",
+  wow: {
+    app: "tidal://playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
+    web: "https://tidal.com/playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
+  },
+  sow: {
+    app: "tidal://playlist/f9a499b1-377f-43de-9b9b-078bf50f388a",
+    web: "https://tidal.com/playlist/f9a499b1-377f-43de-9b9b-078bf50f388a",
+  },
 };
+
+// Försöker öppna Tidal-appen via tidal://-länken. Om appen inte finns installerad
+// händer inget (custom URI-scheman har ingen inbyggd fallback), så vi märker det
+// genom att sidan aldrig döljs/tappar fokus, och öppnar då webbversionen istället.
+function openTidal(appUrl, webUrl){
+  let handedOff = false;
+  const markHandedOff = ()=>{ handedOff = true; };
+  document.addEventListener("visibilitychange", markHandedOff, {once:true});
+  window.addEventListener("pagehide", markHandedOff, {once:true});
+  window.location.href = appUrl;
+  setTimeout(()=>{
+    document.removeEventListener("visibilitychange", markHandedOff);
+    if(!handedOff){
+      window.open(webUrl, "_blank", "noopener");
+    }
+  }, 1200);
+}
 
 let pageIndex = 0;
 const STATES = ["neutral","bra","best"];
@@ -700,7 +723,11 @@ function renderPage(preserveOffsetPx){
 
   document.getElementById("pageTitle").innerHTML = `${page.dayLabel}<span class="sub">${page.typeLabel}</span>`;
   document.getElementById("pageCounter").textContent = `${pageIndex+1}/${PAGES.length}`;
-  document.getElementById("tidalLink").href = TIDAL_LINKS[page.kind];
+  const tidalLinkEl = document.getElementById("tidalLink");
+  tidalLinkEl.onclick = ()=>{
+    const t = TIDAL_LINKS[page.kind];
+    openTidal(t.app, t.web);
+  };
   document.getElementById("prevPage").disabled = pageIndex === 0;
   document.getElementById("nextPage").disabled = pageIndex === PAGES.length - 1;
   const dots = document.getElementById("dots");
@@ -785,10 +812,14 @@ function renderPage(preserveOffsetPx){
         <div class="t">${time}</div>
         <div class="n">${name}</div>
         ${sub ? `<div class="sub">${sub}</div>` : ""}
-        <a class="tidal-link" href="https://tidal.com/search?q=${encodeURIComponent(name)}" target="_blank" rel="noopener">♫</a>
+        <span class="tidal-link">♫</span>
       `;
       el.addEventListener("click", ()=> cycle(el));
-      el.querySelector(".tidal-link").addEventListener("click", (e)=> e.stopPropagation());
+      el.querySelector(".tidal-link").addEventListener("click", (e)=>{
+        e.stopPropagation();
+        const q = encodeURIComponent(name);
+        openTidal(`tidal://search?q=${q}`, `https://tidal.com/search?q=${q}`);
+      });
       render(el);
       colEl.appendChild(el);
       blockEls.push(el);
