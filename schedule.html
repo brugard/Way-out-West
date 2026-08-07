@@ -848,7 +848,8 @@ function openMusicApp(appUrls, webUrl){
   tryNext(0);
 }
 
-let pageIndex = 0;
+const savedPageIndex = parseInt(localStorage.getItem("lastPageIndex"), 10);
+let pageIndex = (!isNaN(savedPageIndex) && savedPageIndex >= 0 && savedPageIndex < PAGES.length) ? savedPageIndex : 0;
 const STATES = ["neutral","bra","best"];
 const MARKS = {neutral:"", bra:"★", best:"★★"};
 
@@ -1041,6 +1042,7 @@ function goToPage(newIndex){
   const sameDay = oldPage.dayId === newPage.dayId;
   const offsetPx = sameDay ? getCurrentGridOffsetPx() : null;
   pageIndex = newIndex;
+  localStorage.setItem("lastPageIndex", pageIndex);
   renderPage(offsetPx);
 }
 
@@ -1063,7 +1065,23 @@ document.addEventListener("touchend", (e)=>{
   touchStartX = null; touchStartY = null;
 }, {passive:true});
 
-renderPage(null);
+// Spara scrollpositionen löpande så den finns kvar om mobilen laddar om
+// fliken i bakgrunden (t.ex. när man växlar till en annan app en stund).
+let scrollSaveTimer = null;
+window.addEventListener("scroll", ()=>{
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = setTimeout(()=>{
+    localStorage.setItem("scrollOffset_" + pageIndex, getCurrentGridOffsetPx());
+  }, 250);
+}, {passive:true});
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "hidden"){
+    localStorage.setItem("scrollOffset_" + pageIndex, getCurrentGridOffsetPx());
+  }
+});
+
+const savedScrollOffset = parseFloat(localStorage.getItem("scrollOffset_" + pageIndex));
+renderPage(!isNaN(savedScrollOffset) ? savedScrollOffset : null);
 setMusicService(MUSIC_SERVICE);
 
 document.querySelectorAll(".service-toggle button").forEach(btn=>{
