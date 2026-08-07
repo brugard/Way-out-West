@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Way Out West / Stay Out West</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f1ede4;
+    --line: #d8d2c3;
+    --label: #8a8577;
+    --ink: #14120f;
+    --pink: #ff8fc2;
+    --gold: #e8b64c;
+    --teal: #4f9d8f;
+    --paper: #fdfcf8;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--ink); font-family:'Archivo',sans-serif;}
+
+  header{
+    position:sticky; top:0; z-index:30;
+    background:var(--ink); color:var(--paper);
+    padding:14px 16px 12px;
+    border-bottom:3px solid var(--pink);
+  }
+  header .eyebrow{
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--pink); font-weight:700;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .eyebrow-right{ display:flex; align-items:center; gap:9px; }
+  #infoBtn{
+    background:none; border:1px solid var(--pink); color:var(--pink);
+    width:16px; height:16px; border-radius:50%; font-size:10px; line-height:1;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-style:italic; font-family:'Archivo',sans-serif; letter-spacing:0; padding:0;
+  }
+  #searchBtn{
+    background:none; border:1px solid var(--pink); color:var(--pink);
+    width:16px; height:16px; border-radius:50%; font-size:11px; line-height:1;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-family:'Archivo',sans-serif; letter-spacing:0; padding:0;
+  }
+  .day-switch{
+    display:flex; align-items:center; gap:10px; margin:2px 0 10px;
+  }
+  .day-switch button{
+    background:none; border:1.5px solid rgba(253,252,248,.35); color:var(--paper);
+    width:34px; height:34px; border-radius:50%; font-size:16px; line-height:1;
+    cursor:pointer; flex:none; display:flex; align-items:center; justify-content:center;
+  }
+  .day-switch button:active{ background:rgba(253,252,248,.15); }
+  .day-switch button:disabled{ opacity:.25; cursor:default; }
+  header h1{
+    font-family:'Anton',sans-serif; font-weight:400;
+    font-size:24px; line-height:1; margin:0; text-transform:uppercase; letter-spacing:.01em;
+    flex:1; text-align:center;
+  }
+  header h1 .sub{ display:block; font-size:12px; color:var(--pink); letter-spacing:.08em; margin-top:2px; }
+  .dots{ display:flex; justify-content:center; gap:6px; margin-top:2px; }
+  .dots span{ width:6px; height:6px; border-radius:50%; background:rgba(253,252,248,.25); }
+  .dots span.active{ background:var(--pink); }
+  .legend{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .legend span{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:20px;
+    border:1px solid rgba(253,252,248,.25);
+  }
+  .legend i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .legend .n i{ background:#55524a; }
+  .legend .b i{ background:var(--teal); }
+  .legend .best i{ background:var(--gold); }
+  .tidal-pill{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:20px;
+    border:1px solid var(--pink); color:var(--pink); text-decoration:none;
+    margin-left:auto;
+  }
+  .tidal-pill:active{ background:rgba(255,143,194,.15); }
+
+  .scroller{
+    width:100%; overflow:hidden;
+    padding: 8px 4px 20px;
+  }
+  .grid{
+    display:grid;
+    column-gap: 1.5px;
+    width:100%;
+  }
+  .grid.cols-5 .col-name{ font-size:10.5px; }
+  .grid.cols-5 .block .n{ font-size:10.8px; }
+  .grid.cols-5 .block .t{ font-size:7.5px; }
+  .grid.cols-5 .block .sub{ font-size:6.5px; }
+  .grid.cols-7 .col-name{ font-size:8.6px; }
+  .grid.cols-7 .block .n{ font-size:8.8px; }
+  .grid.cols-7 .block .t{ font-size:6.5px; }
+  .grid.cols-7 .block .sub{ font-size:6px; }
+
+  .col-head{
+    position:sticky; top:0; z-index:20;
+    background:var(--bg);
+    padding-bottom:4px;
+    min-width:0;
+   
+  }
+  .col-name{
+    background:var(--ink); color:var(--paper);
+    font-family:'Anton',sans-serif; font-weight:400; text-transform:uppercase;
+    line-height:1.05;
+    text-align:center; padding:6px 1px 5px;
+    border-bottom:2px solid var(--pink);
+    word-break: break-word;
+  }
+  .col-name .sub{ display:block; font-size:.8em; opacity:.7; font-weight:700; margin-top:1px; }
+  .col-name-repeat{
+    position:absolute; left:1px; right:1px;
+    background:var(--ink); color:var(--paper);
+    font-family:'Anton',sans-serif; font-weight:400; text-transform:uppercase;
+    line-height:1.05; text-align:center; padding:5px 1px 4px;
+    border-bottom:2px solid var(--pink); word-break:break-word;
+  }
+  .col-name-repeat .sub{ display:block; font-size:.8em; opacity:.7; font-weight:700; margin-top:1px; }
+  .grid.cols-5 .col-name-repeat{ font-size:10.5px; }
+  .grid.cols-7 .col-name-repeat{ font-size:8.6px; }
+  .time-head{ height:1px; }
+
+  .time-axis{ position:relative; min-width:0; }
+  .time-label{
+    position:absolute; left:0; right:2px; text-align:right;
+    font-size:7.5px; font-weight:700; color:var(--label);
+    transform: translateY(-6px);
+  }
+
+  .col{ position:relative; border-left:1px solid var(--line); min-width:0; }
+
+  .hourline{
+    position:absolute; left:0; right:0; border-top:1px solid var(--line);
+   
+  }
+
+  .block{
+    position:absolute; left:1px; right:1px;
+    background:var(--ink); color:var(--paper);
+    border-radius:2px; padding:3px 2px 2px;
+    overflow:hidden; cursor:pointer;
+    transition: transform .08s ease, box-shadow .12s ease;
+    border:1.5px solid var(--ink);
+  }
+  .block:active{ transform: scale(0.97); }
+  .block .t{ font-weight:700; opacity:.8; }
+  .block .n{ font-family:'Anton',sans-serif; font-weight:400; line-height:1.05; text-transform:uppercase; margin-top:1px; word-break:break-word; }
+  .block .sub{ font-weight:600; opacity:.75; margin-top:1px; text-transform:uppercase; }
+  .block .mark{ position:absolute; top:2px; right:2px; font-size:7px; }
+  .tidal-link{
+    position:absolute; bottom:1px; right:2px; font-size:9px; line-height:1;
+    color:inherit; opacity:.55; text-decoration:none; padding:2px;
+  }
+  .tidal-link:active{ opacity:1; }
+
+  .block.bra{ background:var(--teal); border-color:var(--teal); color:#0c1f1b; }
+  .block.bra .t, .block.bra .sub{ color:#0c1f1b; opacity:.7; }
+
+  .block.best{ background:var(--gold); border-color:var(--gold); color:#241b03; box-shadow: 0 0 0 3px rgba(232,182,76,.25); }
+  .block.best .t, .block.best .sub{ color:#241b03; opacity:.75; }
+
+  footer{
+    text-align:center; font-size:11px; color:var(--label); padding:6px 16px 30px; font-weight:600;
+  }
+  footer button{
+    background:none; border:1px solid #b9b2a0; color:#726c5c;
+    font-family:'Archivo',sans-serif; font-weight:700; font-size:11px; letter-spacing:.05em;
+    padding:7px 14px; border-radius:20px; cursor:pointer; text-transform:uppercase;
+  }
+  .footer-btns{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px;
+  }
+  .footer-btns #resetBtn{ border-color:#c98a8a; color:#a05a5a; }
+  .info-overlay{
+    position:fixed; inset:0; z-index:50; background:rgba(20,18,15,.7);
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .info-overlay.open{ display:flex; }
+  .info-sheet{
+    background:var(--paper); color:var(--ink); width:100%; max-width:520px;
+    max-height:82vh; overflow-y:auto; border-radius:14px 14px 0 0;
+    padding:20px 20px 28px; box-shadow:0 -4px 24px rgba(0,0,0,.3);
+  }
+  .info-sheet h2{
+    font-family:'Anton',sans-serif; font-weight:400; text-transform:uppercase;
+    font-size:22px; margin:0 0 4px; letter-spacing:.01em;
+  }
+  .info-sheet .pitch{ font-size:13px; font-weight:600; color:#726c5c; margin:0 0 18px; line-height:1.4; }
+  .info-sheet h3{
+    font-family:'Anton',sans-serif; font-weight:400; text-transform:uppercase;
+    font-size:14px; margin:18px 0 8px; letter-spacing:.02em; color:var(--pink);
+  }
+  .info-sheet ul{ margin:0; padding-left:18px; }
+  .info-sheet li{ font-size:13px; line-height:1.55; margin-bottom:7px; }
+  .info-sheet .swatches{ display:flex; gap:10px; margin-top:4px; }
+  .info-sheet .swatch{ display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; }
+  .info-sheet .swatch i{ width:14px; height:14px; border-radius:3px; display:inline-block; border:1px solid var(--line); }
+  .info-close{
+    display:block; margin:22px auto 0; background:var(--ink); color:var(--paper);
+    border:none; font-family:'Archivo',sans-serif; font-weight:700; font-size:12px;
+    letter-spacing:.05em; padding:10px 22px; border-radius:20px; cursor:pointer; text-transform:uppercase;
+  }
+  .search-input{
+    width:100%; box-sizing:border-box; font-family:'Archivo',sans-serif; font-weight:600;
+    font-size:16px; padding:11px 14px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--bg); color:var(--ink); margin-bottom:4px;
+  }
+  .search-input:focus{ outline:none; border-color:var(--pink); }
+  .search-results{ margin-top:10px; }
+  .search-result{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 4px; border-bottom:1px solid var(--line); cursor:pointer;
+  }
+  .search-result:active{ background:rgba(255,143,194,.12); }
+  .search-result .sr-name{ font-family:'Anton',sans-serif; font-weight:400; text-transform:uppercase; font-size:15px; }
+  .search-result .sr-meta{ font-size:11px; font-weight:700; color:#8a8577; text-align:right; white-space:nowrap; }
+  .search-empty{ font-size:13px; color:#8a8577; font-weight:600; padding:14px 4px; text-align:center; }
+  @keyframes blockPulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(255,143,194,0); }
+    25%,75%{ box-shadow:0 0 0 4px rgba(255,143,194,.9); }
+  }
+  .block.pulse{ animation:blockPulse 1.4s ease-in-out 2; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow"><span>Slottsskogen & klubbarna</span><span class="eyebrow-right"><button id="searchBtn" aria-label="Sök artist">⌕</button><button id="infoBtn" aria-label="Om appen">i</button><span id="pageCounter">1/6</span></span></div>
+  <div class="day-switch">
+    <button id="prevPage" aria-label="Föregående">‹</button>
+    <h1 id="pageTitle">Torsdag<span class="sub">Way Out West</span></h1>
+    <button id="nextPage" aria-label="Nästa">›</button>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="legend">
+    <span class="n"><i></i>Neutral</span>
+    <span class="b"><i></i>Bra</span>
+    <span class="best"><i></i>Bäst</span>
+    <a id="tidalLink" class="tidal-pill" href="#" target="_blank" rel="noopener">♫ Spellista</a>
+  </div>
+</header>
+
+<div class="info-overlay" id="infoOverlay">
+  <div class="info-sheet">
+    <h2>Way Out West & Stay Out West i fickan</h2>
+    <p class="pitch">Ett eget litet schema för hela festivalen, i samma svartvita affischstil som finns på wayoutwest.se, där du kan markera vilka konserter som är bäst, bra eller strunt samma.</p>
+
+    <h3>Användning</h3>
+    <ul>
+      <li>Svep vänster/höger (eller pilarna i headern) för att bläddra mellan sex sidor: Torsdag/Fredag/Lördag, varje dag med både Way Out West och Stay Out West.</li>
+      <li>Byter du mellan WOW och SOW samma dag hamnar du på samma klockslag som du precis tittade på — svepningen är tidssynkad.</li>
+      <li>Tryck på lupp-ikonen för att söka upp en artist och hoppa direkt till rätt ställe i schemat.</li>
+      <li>Tryck på en konsert för att växla status: neutral → bra → bäst → neutral igen.</li>
+      <li>Tryck på ♫ i hörnet av ett block för att söka upp artisten på Tidal.</li>
+      <li>Den rosa pillen "♫ Spellista" öppnar hela Tidal-spellistan för den scenen du är på (WOW eller SOW).</li>
+      <li>"Spara till fil" längst ner sparar alla dina val (både WOW och SOW, alla dagar) i en fil, som backup om webbläsaren skulle glömma dem.</li>
+    </ul>
+
+    <h3>Bakgrundsfärg</h3>
+    <div class="swatches">
+      <span class="swatch"><i style="background:#ffffff"></i>Bara WOW</span>
+      <span class="swatch"><i style="background:#f2d9e3"></i>Båda igång</span>
+      <span class="swatch"><i style="background:#f1ede4"></i>Bara SOW kvar</span>
+    </div>
+
+    <button class="info-close" id="infoClose">Stäng</button>
+  </div>
+</div>
+
+<div class="info-overlay" id="searchOverlay">
+  <div class="info-sheet">
+    <h2>Sök artist</h2>
+    <input type="text" id="searchInput" class="search-input" placeholder="Skriv ett artistnamn..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+    <button class="info-close" id="searchClose">Stäng</button>
+  </div>
+</div>
+
+<div class="scroller">
+  <div class="grid" id="grid"></div>
+</div>
+
+<footer>
+  Tryck på en konsert för att växla status · svep vänster/höger för att byta sida
+  <div class="footer-btns">
+    <button id="exportBtn">Spara till fil</button>
+    <button id="resetBtn">Nollställ sidan</button>
+  </div>
+</footer>
+
+<script>
+const PX_PER_MIN = 1.8; // samma skala för WOW och SOW så en timme ser lika hög ut överallt
+
+function toMin(hhmm, dayStartMin){
+  const [h,m] = hhmm.split(":").map(Number);
+  let total = h*60+m;
+  if(total < dayStartMin) total += 24*60;
+  return total;
+}
+
+const WOW_DAYS = [
+  {
+    id: "thu",
+    label: "Torsdag 13 aug",
+    startMin: 14*60, endMin: 23*60,
+    stages: ["Flamingo","Azalea","Linné","Dungen","Höjden"],
+    raw: {
+      Flamingo: [
+        ["14:30","David Ritschard","15:30"],
+        ["16:40","Clipse","17:40"],
+        ["18:55","Zara Larsson","20:10"],
+        ["21:40","The XX","23:00"],
+      ],
+      Azalea: [
+        ["15:35","Arthur Verocai","16:35"],
+        ["17:45","Lily Allen","18:45","Performs West End Girl"],
+        ["20:15","Moby","21:30"],
+      ],
+      "Linné": [
+        ["14:50","Yaeger","15:45"],
+        ["16:30","Στella","17:30"],
+        ["18:10","Oklou","19:10"],
+        ["20:10","Anna von Hausswolff","21:15"],
+        ["22:00","Cobrah","23:00"],
+      ],
+      Dungen: [
+        ["14:00","Mattias El Mansouri","16:00"],
+        ["16:00","Ben UFO","18:00"],
+        ["18:00","DJ Boring","19:45"],
+        ["19:45","Roni","21:15"],
+        ["21:15","DJ Gigola","23:00"],
+      ],
+      "Höjden": [
+        ["14:45","Dove Ellis","15:30"],
+        ["16:15","Kasino","17:00"],
+        ["17:45","Jehnny Beth","18:30"],
+        ["19:15","Hitech","20:00"],
+        ["21:00","Alessi Rose","21:45"],
+      ],
+    }
+  },
+  {
+    id: "fri",
+    label: "Fredag 14 aug",
+    startMin: 12*60, endMin: 25*60,
+    stages: ["Flamingo","Azalea","Linné","Dungen","Höjden"],
+    raw: {
+      Flamingo: [
+        ["15:00","Jalen Ngonda","16:00"],
+        ["17:15","Nu Genea","18:20"],
+        ["19:40","The Hives","20:40"],
+        ["23:00","The Cure","01:00"],
+      ],
+      Azalea: [
+        ["13:50","Joel Alme","14:50"],
+        ["16:10","Ravyn Lenae","17:10"],
+        ["18:30","Blood Orange","19:30"],
+        ["21:00","Nick Cave & The Bad Seeds","23:00"],
+      ],
+      "Linné": [
+        ["12:45","Bonnie Prince Billy","13:45"],
+        ["14:30","Sara Parkman","15:20"],
+        ["16:00","Nektar","16:50"],
+        ["17:35","Geese","18:30"],
+        ["19:30","Dijon","20:30"],
+        ["21:15","Four Tet","22:15"],
+        ["23:00","Lykke Li","00:00"],
+      ],
+      Dungen: [
+        ["12:00","Kim Öhman","13:45"],
+        ["13:45","Anna-My b2b Molø","15:30"],
+        ["15:30","Saoirse b2b Leon Vynehall","17:30"],
+        ["17:30","Anish Kumar","19:00"],
+        ["19:00","Ash Lauryn","20:45"],
+        ["20:45","Hanna Ojanen","22:15"],
+        ["22:15","Killen.","00:00"],
+      ],
+      "Höjden": [
+        ["13:15","Son Rompe Pera","14:00"],
+        ["15:00","Annahstasia","15:45"],
+        ["16:30","Qendresa","17:15"],
+        ["18:00","TBA","18:45"],
+        ["19:30","Fcukers","20:15"],
+        ["21:00","Lambrini Girls","21:45"],
+        ["22:30","Rochelle Jordan","23:15"],
+      ],
+    }
+  },
+  {
+    id: "sat",
+    label: "Lördag 15 aug",
+    startMin: 12*60, endMin: 24*60,
+    stages: ["Flamingo","Azalea","Linné","Dungen","Höjden"],
+    raw: {
+      Flamingo: [
+        ["15:00","Lila Iké","16:00"],
+        ["17:20","Ezra Collective","18:30"],
+        ["19:55","Sombr","21:00"],
+        ["22:30","Gorillaz","00:00"],
+      ],
+      Azalea: [
+        ["13:50","Anoushka Shankar","14:50"],
+        ["16:10","Celeste","17:10"],
+        ["18:40","Veronica Maggio","19:50"],
+        ["21:05","Lorde","22:20"],
+      ],
+      "Linné": [
+        ["12:40","Hannes","13:40"],
+        ["14:20","AJ Tracey","15:10"],
+        ["16:00","Saint Etienne","16:50"],
+        ["17:35","Wilco","18:40"],
+        ["19:30","Maribou State","20:30"],
+        ["21:15","Terra","22:15"],
+        ["23:00","Current Joys","00:00"],
+      ],
+      Dungen: [
+        ["12:00","Daesta","13:45"],
+        ["13:45","Parsa","15:30"],
+        ["15:30","Kettama","17:30"],
+        ["17:30","Main Phase","19:15"],
+        ["19:15","Peder Mannerfelt","20:45"],
+        ["20:45","Mohajer","22:15"],
+        ["22:15","S-Candalo","00:00"],
+      ],
+      "Höjden": [
+        ["13:00","Kiss Facility","13:45"],
+        ["14:30","Raghd","15:15"],
+        ["16:00","The Magnolia","16:45"],
+        ["17:30","Swank Mami","18:15"],
+        ["19:00","Smerz","19:45"],
+        ["20:45","Joshua Idehen","21:30"],
+        ["22:30","Svart Ridå","23:15"],
+      ],
+    }
+  },
+];
+
+const SOW_DAYS = [
+  {
+    id:"thu", label:"Torsdag 13 aug",
+    startMin: 21*60+30, endMin: 27*60,
+    venues:["Pustervik","Folkteatern","Musikens Hus","Skeppet","Annedalskyrkan","Filmstudion","Konserthuset"],
+    raw:{
+      "Pustervik":[
+        ["22:40","Mietze Conte","23:40","Stora"],
+        ["23:40","Matilda Lyn","00:10","Lilla"],
+        ["00:10","Thaiboy Digital","01:00","Stora"],
+        ["01:00","Weatherday","01:30","Lilla"],
+        ["01:30","Ninajirachi","02:30","Stora"],
+      ],
+      "Folkteatern":[
+        ["23:00","GB","23:40"],
+        ["00:00","Freak Slug","00:50"],
+        ["01:15","My New Band Believe","03:00"],
+      ],
+      "Musikens Hus":[
+        ["23:30","Hayeminol","00:40"],
+        ["00:40","Agitator","02:00"],
+      ],
+      "Skeppet":[
+        ["23:45","Tiffi M","00:40"],
+        ["00:40","Fantasy of a Broken Heart","01:30"],
+      ],
+      "Annedalskyrkan":[
+        ["00:00","James Yorkston & Johanna Söderberg","01:00"],
+      ],
+      "Filmstudion":[
+        ["23:15","Knut€","00:00"],
+        ["00:00","The Alchemist","01:15"],
+        ["01:15","Earl Sweatshirt","03:00"],
+      ],
+      "Konserthuset":[
+        ["23:00","Goran Kajfeš & Andreas Tilliander","00:00","Garderobshallen"],
+      ],
+    }
+  },
+  {
+    id:"fri", label:"Fredag 14 aug",
+    startMin: 22*60, endMin: 28*60,
+    venues:["Pustervik","Kajskjul 105","Honduras","Folkteatern","Musikens Hus","Skeppet","Annedalskyrkan"],
+    raw:{
+      "Pustervik":[
+        ["23:30","Greg Freeman","00:15","Stora"],
+        ["00:15","Sailor Honeymoon","00:40","Lilla"],
+        ["00:40","Melody's Echo Chamber","01:25","Stora"],
+        ["01:25","Sharp Pins","01:55","Lilla"],
+        ["01:55","Radio Free Alice","04:00","Stora"],
+      ],
+      "Kajskjul 105":[
+        ["22:00","Dgeral","23:30"],
+        ["23:30","Honey Dijon","01:15"],
+        ["01:15","Agnes","02:30"],
+        ["02:30","Josh Caffé","04:00"],
+      ],
+      "Honduras":[
+        ["22:00","Kimia & Thilly","00:00","DJs"],
+        ["00:00","Joolz","02:00","DJs"],
+        ["02:00","OG Bella","04:00","DJs"],
+      ],
+      "Folkteatern":[
+        ["23:35","Elise Elvira","00:05"],
+        ["00:25","Orkid","01:10"],
+        ["01:30","Fanny Avonne","02:15"],
+      ],
+      "Musikens Hus":[
+        ["00:30","Småland","01:15"],
+        ["01:40","Esther","02:40"],
+      ],
+      "Skeppet":[
+        ["23:00","ITD-Sound (DJ-set)","00:10","In This Dunya"],
+        ["00:10","Helen Sun","00:50","In This Dunya"],
+        ["01:10","Rian Brazil","01:55","In This Dunya"],
+      ],
+      "Annedalskyrkan":[
+        ["00:30","Sven Wunder","01:45"],
+      ],
+    }
+  },
+  {
+    id:"sat", label:"Lördag 15 aug",
+    startMin: 22*60, endMin: 28*60,
+    venues:["Pustervik","Kajskjul 105","Honduras","Folkteatern","Musikens Hus","Skeppet","Annedalskyrkan"],
+    raw:{
+      "Pustervik":[
+        ["23:30","A Good Year","00:05","Stora"],
+        ["00:05","Cockhouse","00:35","Lilla"],
+        ["00:35","Olga Myko","01:20","Stora"],
+        ["01:20","Supermodel*","01:50","Lilla"],
+        ["01:50","Jane Remover","02:50","Stora"],
+      ],
+      "Kajskjul 105":[
+        ["00:50","Iceage","02:00"],
+        ["02:00","Les Big Byrd","04:00"],
+      ],
+      "Honduras":[
+        ["22:00","Marble","00:00","DJs"],
+        ["00:00","Nokta Servo","02:00","DJs"],
+        ["02:00","Vilhelm Hasselgren & Ebende","04:00","DJs"],
+      ],
+      "Folkteatern":[
+        ["23:30","Hannah Cohen","00:15"],
+        ["00:45","Bleech 9:3","01:30"],
+        ["01:50","Westside Cowboy","02:50"],
+      ],
+      "Musikens Hus":[
+        ["23:45","Kid08","00:15"],
+        ["00:30","Mami Umami","01:05"],
+        ["01:30","Bricknasty","02:30"],
+      ],
+      "Skeppet":[
+        ["23:30","Passion Tax","00:00","Faithfool Records"],
+        ["00:15","9entle","00:45","Faithfool Records"],
+        ["01:00","Sylvie's Head","01:45","Faithfool Records"],
+      ],
+      "Annedalskyrkan":[
+        ["00:30","James K","01:30"],
+      ],
+    }
+  },
+];
+
+// --- Bygg 6 sidor: Torsdag WOW, Torsdag SOW, Fredag WOW, Fredag SOW, Lördag WOW, Lördag SOW ---
+const PAGES = [];
+for(let i=0;i<3;i++){
+  const w = WOW_DAYS[i], s = SOW_DAYS[i];
+  PAGES.push({
+    kind:"wow", dayId:w.id, dayLabel:w.label.split(" ")[0], typeLabel:"Way Out West",
+    startMin:w.startMin, endMin:w.endMin, cols:w.stages, raw:w.raw,
+    keyPrefix:"wow"
+  });
+  PAGES.push({
+    kind:"sow", dayId:s.id, dayLabel:s.label.split(" ")[0], typeLabel:"Stay Out West",
+    startMin:s.startMin, endMin:s.endMin, cols:s.venues, raw:s.raw,
+    keyPrefix:"sow"
+  });
+}
+
+// Varje dag (WOW+SOW ihop) delar samma tidslinje-origo, så samma klockslag
+// hamnar på exakt samma pixelposition oavsett vilken av de två sidorna du är på.
+const DAY_UNIONS = {};
+PAGES.forEach(p=>{
+  const u = DAY_UNIONS[p.dayId] || {start:p.startMin, end:p.endMin};
+  u.start = Math.min(u.start, p.startMin);
+  u.end = Math.max(u.end, p.endMin);
+  DAY_UNIONS[p.dayId] = u;
+});
+PAGES.forEach(p=>{
+  p.unionStart = DAY_UNIONS[p.dayId].start;
+  p.unionEnd = DAY_UNIONS[p.dayId].end;
+});
+
+// Dagens riktiga programtider för WOW och SOW var för sig (första akten startar / sista akten
+// slutar) — inte "dörrar öppnar"-tiderna, så det rosa "båda igång"-bandet bara visas när det
+// faktiskt finns något på scen på båda sidor samtidigt.
+const DAY_RANGES = {};
+PAGES.forEach(p=>{
+  const r = DAY_RANGES[p.dayId] || {};
+  let firstStart = Infinity, lastEnd = -Infinity;
+  p.cols.forEach(col=>{
+    (p.raw[col]||[]).forEach(([time,,end])=>{
+      const s = toMin(time, p.startMin);
+      const e = toMin(end, p.startMin);
+      if(s < firstStart) firstStart = s;
+      if(e > lastEnd) lastEnd = e;
+    });
+  });
+  if(p.kind==="wow"){ r.wowLastEnd = lastEnd; }
+  else { r.sowFirstStart = firstStart; }
+  DAY_RANGES[p.dayId] = r;
+});
+
+const ZONE_COLORS = {
+  day: "#ffffff",     // vit — medan bara WOW pågår
+  evening: "#f2d9e3", // dämpad rosa — medan båda faktiskt pågår samtidigt
+  night: "#f1ede4",   // krämvit/gråton — efter att sista WOW-akten är slut
+};
+
+// Bygger en statisk bakgrund med skarpa färgövergångar (ingen mjuk gradient, ingen
+// JS-uppdatering vid scroll) — dag tills första SOW-akten börjar, kväll (rosa) medan
+// båda faktiskt pågår, natt efter att sista WOW-akten är slut.
+function buildZoneGradient(page, totalH){
+  const ranges = DAY_RANGES[page.dayId];
+  const sowStartPx = Math.max(0, Math.min(totalH, (ranges.sowFirstStart - page.unionStart) * PX_PER_MIN));
+  const wowEndPx = Math.max(0, Math.min(totalH, (ranges.wowLastEnd - page.unionStart) * PX_PER_MIN));
+  return `linear-gradient(to bottom,
+    ${ZONE_COLORS.day} 0px, ${ZONE_COLORS.day} ${sowStartPx}px,
+    ${ZONE_COLORS.evening} ${sowStartPx}px, ${ZONE_COLORS.evening} ${wowEndPx}px,
+    ${ZONE_COLORS.night} ${wowEndPx}px, ${ZONE_COLORS.night} ${totalH}px)`;
+}
+
+const TIDAL_LINKS = {
+  wow: "https://tidal.com/playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
+  sow: "https://tidal.com/playlist/f9a499b1-377f-43de-9b9b-078bf50f388a",
+};
+
+let pageIndex = 0;
+const STATES = ["neutral","bra","best"];
+const MARKS = {neutral:"", bra:"★", best:"★★"};
+
+function keyFor(page, col, time, name){
+  return `${page.keyPrefix}-${page.dayId}-${col}-${time}-${name}`.toLowerCase().replace(/\s+/g,"_");
+}
+
+function saveState(key, value){
+  try{ localStorage.setItem(key, value); }
+  catch(e){ console.warn("Kunde inte spara status för", key, e); }
+}
+
+function render(el){
+  const state = el.dataset.state;
+  el.classList.remove("bra","best");
+  if(state !== "neutral") el.classList.add(state);
+  el.querySelector(".mark").textContent = MARKS[state];
+}
+
+function cycle(el){
+  const cur = el.dataset.state;
+  const next = STATES[(STATES.indexOf(cur)+1) % STATES.length];
+  el.dataset.state = next;
+  render(el);
+  saveState(el.dataset.key, next);
+}
+
+let blockEls = [];
+let gridTopDocCache = 0; // dokument-Y för rutnätets topp, cachad så scroll-hanteraren slipper tvinga fram reflow varje event
+
+// Räknar om och cachar rutnätets absoluta position i dokumentet. Anropas efter varje
+// rendering/scroll-sättning (billigt engångspris), aldrig i själva scroll-hanteraren.
+function recacheGridTop(){
+  const grid = document.getElementById("grid");
+  const rect = grid.getBoundingClientRect();
+  gridTopDocCache = rect.top + window.scrollY;
+}
+
+// Hämtar hur många px in i rutnätet som just nu syns högst upp i viewporten
+function getCurrentGridOffsetPx(){
+  recacheGridTop();
+  return window.scrollY - gridTopDocCache;
+}
+
+// Sätter scroll så att ett givet px-djup in i rutnätet hazor högst upp i viewporten
+function setScrollToGridOffsetPx(offsetPx){
+  recacheGridTop();
+  window.scrollTo(0, gridTopDocCache + offsetPx);
+  recacheGridTop(); // scrollTo är synkront i de flesta webbläsare, men cacha om för säkerhets skull
+}
+
+
+function renderPage(preserveOffsetPx){
+  const page = PAGES[pageIndex];
+  const totalH = (page.unionEnd - page.unionStart) * PX_PER_MIN;
+
+  document.getElementById("pageTitle").innerHTML = `${page.dayLabel}<span class="sub">${page.typeLabel}</span>`;
+  document.getElementById("pageCounter").textContent = `${pageIndex+1}/${PAGES.length}`;
+  document.getElementById("tidalLink").href = TIDAL_LINKS[page.kind];
+  document.getElementById("prevPage").disabled = pageIndex === 0;
+  document.getElementById("nextPage").disabled = pageIndex === PAGES.length - 1;
+  const dots = document.getElementById("dots");
+  dots.innerHTML = "";
+  PAGES.forEach((p,i)=>{
+    const d = document.createElement("span");
+    if(i===pageIndex) d.className="active";
+    dots.appendChild(d);
+  });
+
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  blockEls = [];
+  grid.className = "grid " + (page.cols.length<=5 ? "cols-5" : "cols-7");
+  grid.style.gridTemplateColumns = `24px repeat(${page.cols.length}, 1fr)`;
+  const zoneGradient = buildZoneGradient(page, totalH);
+
+  const corner = document.createElement("div");
+  corner.className = "col-head time-head";
+  grid.appendChild(corner);
+  page.cols.forEach(c=>{
+    const parts = c.split(" — ");
+    const h = document.createElement("div");
+    h.className = "col-head";
+    h.innerHTML = `<div class="col-name">${parts[0]}${parts[1] ? `<span class="sub">${parts[1]}</span>` : ""}</div>`;
+    grid.appendChild(h);
+  });
+
+  const axis = document.createElement("div");
+  axis.className = "time-axis";
+  axis.style.height = totalH + "px";
+  axis.style.background = zoneGradient;
+  for(let m=page.unionStart; m<=page.unionEnd; m+=60){
+    const lbl = document.createElement("div");
+    lbl.className = "time-label";
+    lbl.style.top = ((m-page.unionStart)*PX_PER_MIN) + "px";
+    const h = Math.floor(m/60) % 24;
+    lbl.textContent = String(h).padStart(2,"0")+":00";
+    axis.appendChild(lbl);
+  }
+  grid.appendChild(axis);
+
+  page.cols.forEach(col=>{
+    const colEl = document.createElement("div");
+    colEl.className = "col";
+    colEl.style.height = totalH + "px";
+    colEl.style.background = zoneGradient;
+
+    for(let m=page.unionStart; m<=page.unionEnd; m+=60){
+      const hl = document.createElement("div");
+      hl.className = "hourline";
+      hl.style.top = ((m-page.unionStart)*PX_PER_MIN) + "px";
+      colEl.appendChild(hl);
+    }
+
+    if(page.kind === "sow"){
+      const repeatTop = (DAY_RANGES[page.dayId].sowFirstStart - page.unionStart) * PX_PER_MIN - 30;
+      const parts = col.split(" — ");
+      const repeatLbl = document.createElement("div");
+      repeatLbl.className = "col-name-repeat";
+      repeatLbl.style.top = repeatTop + "px";
+      repeatLbl.innerHTML = `${parts[0]}${parts[1] ? `<span class="sub">${parts[1]}</span>` : ""}`;
+      colEl.appendChild(repeatLbl);
+    }
+
+    (page.raw[col]||[]).forEach(entry=>{
+      const [time, name, end, sub] = entry;
+      const startMinAbs = toMin(time, page.startMin);
+      const endMinAbs = toMin(end, page.startMin);
+      const top = (startMinAbs - page.unionStart) * PX_PER_MIN;
+      const height = Math.max((endMinAbs - startMinAbs) * PX_PER_MIN - 3, 26);
+
+      const el = document.createElement("div");
+      el.className = "block";
+      el.style.top = top + "px";
+      el.style.height = height + "px";
+      const k = keyFor(page, col, time, name);
+      el.dataset.key = k;
+      el.dataset.state = localStorage.getItem(k) || "neutral";
+      el.innerHTML = `
+        <span class="mark"></span>
+        <div class="t">${time}</div>
+        <div class="n">${name}</div>
+        ${sub ? `<div class="sub">${sub}</div>` : ""}
+        <a class="tidal-link" href="https://tidal.com/search?q=${encodeURIComponent(name)}" target="_blank" rel="noopener">♫</a>
+      `;
+      el.addEventListener("click", ()=> cycle(el));
+      el.querySelector(".tidal-link").addEventListener("click", (e)=> e.stopPropagation());
+      render(el);
+      colEl.appendChild(el);
+      blockEls.push(el);
+    });
+
+    grid.appendChild(colEl);
+  });
+
+  if(preserveOffsetPx !== null && preserveOffsetPx !== undefined){
+    setScrollToGridOffsetPx(preserveOffsetPx);
+  } else {
+    // Öppna sidan där dess eget schema faktiskt börjar, inte högst upp på hela dagens tidslinje
+    const defaultOffsetPx = (page.startMin - page.unionStart) * PX_PER_MIN;
+    setScrollToGridOffsetPx(defaultOffsetPx);
+  }
+}
+
+function goToPage(newIndex){
+  if(newIndex < 0 || newIndex >= PAGES.length || newIndex === pageIndex) return;
+  const oldPage = PAGES[pageIndex];
+  const newPage = PAGES[newIndex];
+  const sameDay = oldPage.dayId === newPage.dayId;
+  const offsetPx = sameDay ? getCurrentGridOffsetPx() : null;
+  pageIndex = newIndex;
+  renderPage(offsetPx);
+}
+
+document.getElementById("prevPage").addEventListener("click", ()=> goToPage(pageIndex-1));
+document.getElementById("nextPage").addEventListener("click", ()=> goToPage(pageIndex+1));
+
+let touchStartX = null, touchStartY = null;
+document.addEventListener("touchstart", (e)=>{
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, {passive:true});
+document.addEventListener("touchend", (e)=>{
+  if(touchStartX === null) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if(Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)*1.5){
+    if(dx < 0) goToPage(pageIndex+1);
+    else goToPage(pageIndex-1);
+  }
+  touchStartX = null; touchStartY = null;
+}, {passive:true});
+
+renderPage(null);
+
+const infoOverlay = document.getElementById("infoOverlay");
+document.getElementById("infoBtn").addEventListener("click", ()=> infoOverlay.classList.add("open"));
+document.getElementById("infoClose").addEventListener("click", ()=> infoOverlay.classList.remove("open"));
+infoOverlay.addEventListener("click", (e)=>{
+  if(e.target === infoOverlay) infoOverlay.classList.remove("open");
+});
+
+// --- Sök artist ---
+const SEARCH_INDEX = [];
+PAGES.forEach((page, pageIdx)=>{
+  page.cols.forEach(col=>{
+    (page.raw[col]||[]).forEach(([time, name, end, sub])=>{
+      SEARCH_INDEX.push({ pageIdx, col, time, end, name, sub, dayLabel: page.dayLabel, typeLabel: page.typeLabel });
+    });
+  });
+});
+
+const searchOverlay = document.getElementById("searchOverlay");
+const searchInput = document.getElementById("searchInput");
+const searchResultsEl = document.getElementById("searchResults");
+
+function openSearch(){
+  searchOverlay.classList.add("open");
+  searchInput.value = "";
+  searchResultsEl.innerHTML = "";
+  setTimeout(()=> searchInput.focus(), 50);
+}
+function closeSearch(){
+  searchOverlay.classList.remove("open");
+}
+document.getElementById("searchBtn").addEventListener("click", openSearch);
+document.getElementById("searchClose").addEventListener("click", closeSearch);
+searchOverlay.addEventListener("click", (e)=>{
+  if(e.target === searchOverlay) closeSearch();
+});
+
+function jumpToResult(r){
+  const targetPage = PAGES[r.pageIdx];
+  const startAbs = toMin(r.time, targetPage.startMin);
+  const offsetPx = Math.max(0, (startAbs - targetPage.unionStart) * PX_PER_MIN - 40);
+  pageIndex = r.pageIdx;
+  renderPage(offsetPx);
+  closeSearch();
+  const key = keyFor(targetPage, r.col, r.time, r.name);
+  const target = blockEls.find(el => el.dataset.key === key);
+  if(target){
+    target.classList.add("pulse");
+    setTimeout(()=> target.classList.remove("pulse"), 2900);
+  }
+}
+
+searchInput.addEventListener("input", ()=>{
+  const q = searchInput.value.trim().toLowerCase();
+  searchResultsEl.innerHTML = "";
+  if(q.length < 2) return;
+  const matches = SEARCH_INDEX.filter(r => r.name.toLowerCase().includes(q)).slice(0, 30);
+  if(matches.length === 0){
+    searchResultsEl.innerHTML = `<div class="search-empty">Inga träffar</div>`;
+    return;
+  }
+  matches.forEach(r=>{
+    const row = document.createElement("div");
+    row.className = "search-result";
+    row.innerHTML = `
+      <span class="sr-name">${r.name}</span>
+      <span class="sr-meta">${r.dayLabel} ${r.typeLabel === "Way Out West" ? "WOW" : "SOW"}<br>${r.col} · ${r.time}</span>
+    `;
+    row.addEventListener("click", ()=> jumpToResult(r));
+    searchResultsEl.appendChild(row);
+  });
+});
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  const page = PAGES[pageIndex];
+  if(!confirm(`Nollställ alla statusar för ${page.dayLabel} – ${page.typeLabel}?`)) return;
+  for(const el of blockEls){
+    el.dataset.state = "neutral";
+    render(el);
+    saveState(el.dataset.key, "neutral");
+  }
+});
+
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const data = {};
+  PAGES.forEach(page=>{
+    page.cols.forEach(col=>{
+      (page.raw[col]||[]).forEach(entry=>{
+        const [time, name] = entry;
+        const k = keyFor(page, col, time, name);
+        const val = localStorage.getItem(k);
+        if(val && val !== "neutral") data[k] = val;
+      });
+    });
+  });
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "wow-sow-status.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>
