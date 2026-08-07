@@ -174,9 +174,14 @@
     padding:7px 14px; border-radius:20px; cursor:pointer; text-transform:uppercase;
   }
   .footer-btns{
-    display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px;
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px;
   }
-  .footer-btns #resetBtn{ border-color:#c98a8a; color:#a05a5a; }
+  .icon-btn{
+    width:34px; height:34px; padding:0; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700;
+  }
+  .icon-btn svg{ width:17px; height:17px; }
+  #shareBtn{ border-color:var(--pink); color:var(--pink); }
   .info-overlay{
     position:fixed; inset:0; z-index:50; background:rgba(20,18,15,.7);
     display:none; align-items:flex-end; justify-content:center;
@@ -266,7 +271,7 @@
       <li>Tryck på en konsert för att växla status: neutral → bra → bäst → neutral igen.</li>
       <li>Tryck på ♫ i hörnet av ett block för att söka upp artisten i din valda musiktjänst.</li>
       <li>Den rosa pillen "♫ Spellista" öppnar hela spellistan för den scenen du är på (WOW eller SOW).</li>
-      <li>"Spara till fil" längst ner sparar alla dina val (både WOW och SOW, alla dagar) i en fil, som backup om webbläsaren skulle glömma dem.</li>
+      <li>Ikonerna längst ner: ↗ delar schemat, ↓ sparar dina val till en fil, ↑ läser in en sparad fil igen.</li>
     </ul>
 
     <h3>Musiktjänst</h3>
@@ -300,11 +305,10 @@
 </div>
 
 <footer>
-  Tryck på en konsert för att växla status · svep vänster/höger för att byta sida
   <div class="footer-btns">
-    <button id="exportBtn">Spara till fil</button>
-    <button id="importBtn">Läs in fil</button>
-    <button id="resetBtn">Nollställ sidan</button>
+    <button id="shareBtn" class="icon-btn" aria-label="Dela schema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></button>
+    <button id="exportBtn" class="icon-btn" aria-label="Spara till fil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg></button>
+    <button id="importBtn" class="icon-btn" aria-label="Läs in fil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></button>
   </div>
   <input type="file" id="importInput" accept="application/json" style="display:none">
 </footer>
@@ -1160,13 +1164,53 @@ searchInput.addEventListener("input", ()=>{
   });
 });
 
-document.getElementById("resetBtn").addEventListener("click", ()=>{
-  const page = PAGES[pageIndex];
-  if(!confirm(`Nollställ alla statusar för ${page.dayLabel} – ${page.typeLabel}?`)) return;
-  for(const el of blockEls){
-    el.dataset.state = "neutral";
-    render(el);
-    saveState(el.dataset.key, "neutral");
+// --- Dela schema ---
+function buildShareText(){
+  const SCHEDULE_URL = "https://brugard.github.io/Way-out-West/schedule.html";
+  let out = "Mitt Way Out West & Stay Out West-schema:\n";
+  let anyPicks = false;
+
+  PAGES.forEach(page=>{
+    const best = [];
+    const bra = [];
+    page.cols.forEach(col=>{
+      (page.raw[col]||[]).forEach(([time, name])=>{
+        const k = keyFor(page, col, time, name);
+        const state = localStorage.getItem(k);
+        const line = `${name} (${time}, ${col})`;
+        if(state === "best") best.push(line);
+        else if(state === "bra") bra.push(line);
+      });
+    });
+    if(best.length === 0 && bra.length === 0) return;
+    anyPicks = true;
+    out += `\n${page.dayLabel.toUpperCase()} — ${page.typeLabel}\n`;
+    if(best.length) out += `★★ Bäst: ${best.join(", ")}\n`;
+    if(bra.length) out += `★ Bra: ${bra.join(", ")}\n`;
+  });
+
+  if(!anyPicks){
+    out = "Kolla in mitt Way Out West & Stay Out West-schema:";
+  }
+  out += `\n${SCHEDULE_URL}`;
+  return out;
+}
+
+document.getElementById("shareBtn").addEventListener("click", async ()=>{
+  const text = buildShareText();
+  if(navigator.share){
+    try{
+      await navigator.share({ text });
+    }catch(err){
+      // användaren avbröt delningen, eller så stöds det inte — inget att göra
+    }
+  } else {
+    try{
+      await navigator.clipboard.writeText(text);
+      alert("Kunde inte öppna delningsmenyn på den här enheten, så texten är kopierad istället — klistra in den där du vill dela den.");
+    }catch(err){
+      alert(text);
+    }
   }
 });
 
