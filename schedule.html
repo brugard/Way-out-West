@@ -636,6 +636,141 @@ function buildZoneGradient(page, totalH){
     ${ZONE_COLORS.night} ${wowEndPx}px, ${ZONE_COLORS.night} ${totalH}px)`;
 }
 
+const TIDAL_ARTIST_IDS = {
+  "9entle": "65673717",
+  "A Good Year": "45831095",
+  "AJ Tracey": "7442712",
+  "Agitator": "4428872",
+  "Agnes": "3294",
+  "Alessi Rose": "32588915",
+  "Anish Kumar": "5031808",
+  "Anna von Hausswolff": "3664307",
+  "Anna-My b2b Molø": "54474991",
+  "Annahstasia": "10607752",
+  "Anoushka Shankar": "3505647",
+  "Arthur Verocai": "3711962",
+  "Ash Lauryn": "27751412",
+  "Ben UFO": "4867937",
+  "Bleech 9:3": "67713378",
+  "Blood Orange": "3994804",
+  "Bonnie Prince Billy": "3643659",
+  "Bricknasty": "18239857",
+  "Celeste": "3560540",
+  "Clipse": "4332",
+  "Cobrah": "5723004",
+  "Cockhouse": "47437261",
+  "Current Joys": "9033400",
+  "DJ Boring": "8368169",
+  "DJ Gigola": "15389277",
+  "David Ritschard": "10616764",
+  "Dgeral": "7655755",
+  "Dijon": "9177293",
+  "Dove Ellis": "38691383",
+  "Earl Sweatshirt": "4774205",
+  "Elise Elvira": "9097701",
+  "Esther": "3532735",
+  "Ezra Collective": "9313524",
+  "Fanny Avonne": "57944847",
+  "Fantasy of a Broken Heart": "18685281",
+  "Fcukers": "38419941",
+  "Four Tet": "3520717",
+  "Freak Slug": "9577603",
+  "GB": "4128920",
+  "Geese": "3578350",
+  "Goran Kajfeš & Andreas Tilliander": "4028493",
+  "Gorillaz": "8853",
+  "Greg Freeman": "52509696",
+  "Hannah Cohen": "4544588",
+  "Hannes": "34582407",
+  "Hayeminol": "16723271",
+  "Helen Sun": "22662026",
+  "Hitech": "6275949",
+  "Honey Dijon": "3691408",
+  "Iceage": "3844922",
+  "Jalen Ngonda": "25664915",
+  "James K": "6296444",
+  "James Yorkston & Johanna Söderberg": "64577",
+  "Jane Remover": "32199968",
+  "Jehnny Beth": "7395369",
+  "Joel Alme": "3616035",
+  "Joolz": "3606789",
+  "Josh Caffé": "10590217",
+  "Joshua Idehen": "5919579",
+  "Kasino": "3883206",
+  "Kettama": "10098411",
+  "Kid08": "56485122",
+  "Killen.": "46073197",
+  "Kimia & Thilly": "8061101",
+  "Kiss Facility": "38577853",
+  "Knut€": "44980850",
+  "Lambrini Girls": "22274325",
+  "Les Big Byrd": "3959582",
+  "Lila Iké": "9118462",
+  "Lily Allen": "9450",
+  "Lorde": "4931831",
+  "Lykke Li": "3519929",
+  "Main Phase": "18093987",
+  "Mami Umami": "30339482",
+  "Marble": "23563",
+  "Maribou State": "4063663",
+  "Matilda Lyn": "17707840",
+  "Mattias El Mansouri": "41427754",
+  "Melody's Echo Chamber": "4696787",
+  "Mietze Conte": "34226468",
+  "Moby": "9045",
+  "Mohajer": "26069362",
+  "My New Band Believe": "54723873",
+  "Nektar": "48672590",
+  "Nick Cave & The Bad Seeds": "9003",
+  "Ninajirachi": "8564195",
+  "Nokta Servo": "56272081",
+  "Nu Genea": "25389291",
+  "OG Bella": "17251842",
+  "Oklou": "8140560",
+  "Olga Myko": "53039303",
+  "Orkid": "8742438",
+  "Parsa": "6678181",
+  "Passion Tax": "78783178",
+  "Peder Mannerfelt": "4791256",
+  "Qendresa": "9211220",
+  "Radio Free Alice": "19273702",
+  "Raghd": "8004606",
+  "Ravyn Lenae": "7262284",
+  "Rian Brazil": "17892036",
+  "Rochelle Jordan": "5882081",
+  "Roni": "28823",
+  "Sailor Honeymoon": "39424762",
+  "Saint Etienne": "1335",
+  "Saoirse b2b Leon Vynehall": "5268812",
+  "Sara Parkman": "7714315",
+  "Sharp Pins": "37307230",
+  "Smerz": "7576989",
+  "Småland": "70989474",
+  "Sombr": "28398607",
+  "Son Rompe Pera": "10416177",
+  "Supermodel*": "61265494",
+  "Svart Ridå": "29163085",
+  "Sven Wunder": "16563084",
+  "Swank Mami": "34621851",
+  "Sylvie's Head": "48297298",
+  "Terra": "42585756",
+  "Thaiboy Digital": "6268154",
+  "The Alchemist": "7686",
+  "The Cure": "18695",
+  "The Hives": "31860",
+  "The Magnolia": "6931410",
+  "The XX": "3632922",
+  "Tiffi M": "51699490",
+  "Veronica Maggio": "3522100",
+  "Vilhelm Hasselgren & Ebende": "10256028",
+  "Weatherday": "16215931",
+  "Westside Cowboy": "51427239",
+  "Wilco": "13971",
+  "Yaeger": "8993202",
+  "Zara Larsson": "4815108",
+  "Στella": "6972045",
+};
+
 const TIDAL_LINKS = {
   wow: {
     app: "tidal://playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
@@ -650,18 +785,38 @@ const TIDAL_LINKS = {
 // Försöker öppna Tidal-appen via tidal://-länken. Om appen inte finns installerad
 // händer inget (custom URI-scheman har ingen inbyggd fallback), så vi märker det
 // genom att sidan aldrig döljs/tappar fokus, och öppnar då webbversionen istället.
-function openTidal(appUrl, webUrl){
+// Försöker öppna Tidal-appen. Custom URI-scheman har ingen inbyggd fallback, och Tidal
+// dokumenterar inte sitt appschema publikt — därför testas flera kandidatformat i tur
+// och ordning, och först om inget av dem tar över öppnas webbversionen.
+function openTidal(appUrls, webUrl){
+  const candidates = Array.isArray(appUrls) ? appUrls : [appUrls];
   let handedOff = false;
   const markHandedOff = ()=>{ handedOff = true; };
-  document.addEventListener("visibilitychange", markHandedOff, {once:true});
-  window.addEventListener("pagehide", markHandedOff, {once:true});
-  window.location.href = appUrl;
-  setTimeout(()=>{
+  document.addEventListener("visibilitychange", markHandedOff);
+  window.addEventListener("pagehide", markHandedOff);
+
+  const cleanup = ()=>{
     document.removeEventListener("visibilitychange", markHandedOff);
-    if(!handedOff){
+    window.removeEventListener("pagehide", markHandedOff);
+  };
+
+  const tryNext = (i)=>{
+    if(handedOff){ cleanup(); return; }
+    if(i >= candidates.length){
+      cleanup();
       window.open(webUrl, "_blank", "noopener");
+      return;
     }
-  }, 1200);
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = candidates[i];
+    document.body.appendChild(iframe);
+    setTimeout(()=>{
+      iframe.remove();
+      tryNext(i+1);
+    }, 500);
+  };
+  tryNext(0);
 }
 
 let pageIndex = 0;
@@ -817,8 +972,13 @@ function renderPage(preserveOffsetPx){
       el.addEventListener("click", ()=> cycle(el));
       el.querySelector(".tidal-link").addEventListener("click", (e)=>{
         e.stopPropagation();
-        const q = encodeURIComponent(name);
-        openTidal(`tidal://search?q=${q}`, `https://tidal.com/search?q=${q}`);
+        const artistId = TIDAL_ARTIST_IDS[name];
+        if(artistId){
+          openTidal(`tidal://artist/${artistId}`, `https://tidal.com/browse/artist/${artistId}`);
+        } else {
+          const q = encodeURIComponent(name);
+          window.open(`https://tidal.com/search?q=${q}`, "_blank", "noopener");
+        }
       });
       render(el);
       colEl.appendChild(el);
