@@ -30,7 +30,3 @@ Statusarna sparas automatiskt i webbläsarens minne på just den enheten. Vill d
 
 - **Spara till fil** (längst ner i appen) laddar ner en liten JSON-fil med dina val.
 - **Läs in fil** läser in den filen igen — praktiskt om du byter telefon, webbläsare, eller rensar webbläsardata.
-
-## Uppdatera schemat
-
-Filen `schedule.html` innehåller all data hårdkodad. Ändras något i det officiella schemat, redigera raderna i `DAYS`-arrayerna i filen och ladda upp den nya versionen (Add file → Upload files, skriv över) på GitHub.
