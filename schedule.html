@@ -1129,18 +1129,25 @@ searchOverlay.addEventListener("click", (e)=>{
 });
 
 function jumpToResult(r){
-  const targetPage = PAGES[r.pageIdx];
-  const startAbs = toMin(r.time, targetPage.startMin);
-  const offsetPx = Math.max(0, (startAbs - targetPage.unionStart) * PX_PER_MIN - 40);
-  pageIndex = r.pageIdx;
-  renderPage(offsetPx);
+  searchInput.blur();
   closeSearch();
-  const key = keyFor(targetPage, r.col, r.time, r.name);
-  const target = blockEls.find(el => el.dataset.key === key);
-  if(target){
-    target.classList.add("pulse");
-    setTimeout(()=> target.classList.remove("pulse"), 2900);
-  }
+  setTimeout(()=>{
+    const targetPage = PAGES[r.pageIdx];
+    const startAbs = toMin(r.time, targetPage.startMin);
+    const offsetPx = Math.max(0, (startAbs - targetPage.unionStart) * PX_PER_MIN - 60*PX_PER_MIN);
+    pageIndex = r.pageIdx;
+    localStorage.setItem("lastPageIndex", pageIndex);
+    renderPage(offsetPx);
+    const key = keyFor(targetPage, r.col, r.time, r.name);
+    const target = blockEls.find(el => el.dataset.key === key);
+    if(target){
+      target.classList.add("pulse");
+      setTimeout(()=> target.classList.remove("pulse"), 2900);
+    }
+    // Skyddsnät: mobilens skärmyta justeras ibland ytterligare en gång efter att
+    // tangentbordet stängts helt, vilket kan flytta scrollpositionen i efterhand.
+    setTimeout(()=> setScrollToGridOffsetPx(offsetPx), 400);
+  }, 350);
 }
 
 searchInput.addEventListener("input", ()=>{
