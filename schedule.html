@@ -206,6 +206,13 @@
     border:none; font-family:'Archivo',sans-serif; font-weight:700; font-size:12px;
     letter-spacing:.05em; padding:10px 22px; border-radius:20px; cursor:pointer; text-transform:uppercase;
   }
+  .service-toggle{ display:flex; gap:8px; }
+  .service-toggle button{
+    flex:1; font-family:'Archivo',sans-serif; font-weight:700; font-size:13px;
+    padding:9px; border-radius:10px; border:1.5px solid var(--line); background:none;
+    color:var(--ink); cursor:pointer;
+  }
+  .service-toggle button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
   .search-input{
     width:100%; box-sizing:border-box; font-family:'Archivo',sans-serif; font-weight:600;
     font-size:16px; padding:11px 14px; border-radius:10px; border:1.5px solid var(--line);
@@ -257,10 +264,16 @@
       <li>Byter du mellan WOW och SOW samma dag hamnar du på samma klockslag som du precis tittade på — svepningen är tidssynkad.</li>
       <li>Tryck på lupp-ikonen för att söka upp en artist och hoppa direkt till rätt ställe i schemat.</li>
       <li>Tryck på en konsert för att växla status: neutral → bra → bäst → neutral igen.</li>
-      <li>Tryck på ♫ i hörnet av ett block för att söka upp artisten på Tidal.</li>
-      <li>Den rosa pillen "♫ Spellista" öppnar hela Tidal-spellistan för den scenen du är på (WOW eller SOW).</li>
+      <li>Tryck på ♫ i hörnet av ett block för att söka upp artisten i din valda musiktjänst.</li>
+      <li>Den rosa pillen "♫ Spellista" öppnar hela spellistan för den scenen du är på (WOW eller SOW).</li>
       <li>"Spara till fil" längst ner sparar alla dina val (både WOW och SOW, alla dagar) i en fil, som backup om webbläsaren skulle glömma dem.</li>
     </ul>
+
+    <h3>Musiktjänst</h3>
+    <div class="service-toggle" id="serviceToggle">
+      <button data-service="tidal">Tidal</button>
+      <button data-service="spotify">Spotify</button>
+    </div>
 
     <h3>Bakgrundsfärg</h3>
     <div class="swatches">
@@ -771,16 +784,32 @@ const TIDAL_ARTIST_IDS = {
   "Στella": "6972045",
 };
 
-const TIDAL_LINKS = {
-  wow: {
-    app: "tidal://playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
-    web: "https://tidal.com/playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
+const PLAYLIST_LINKS = {
+  tidal: {
+    wow: {
+      app: "tidal://playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
+      web: "https://tidal.com/playlist/080c6bd1-c1d9-4e29-a6ad-75bd343ddb57",
+    },
+    sow: {
+      app: "tidal://playlist/f9a499b1-377f-43de-9b9b-078bf50f388a",
+      web: "https://tidal.com/playlist/f9a499b1-377f-43de-9b9b-078bf50f388a",
+    },
   },
-  sow: {
-    app: "tidal://playlist/f9a499b1-377f-43de-9b9b-078bf50f388a",
-    web: "https://tidal.com/playlist/f9a499b1-377f-43de-9b9b-078bf50f388a",
+  spotify: {
+    wow: null, // ingen Spotify-spellista kopplad än
+    sow: null,
   },
 };
+
+let MUSIC_SERVICE = localStorage.getItem("musicService") || "tidal";
+
+function setMusicService(service){
+  MUSIC_SERVICE = service;
+  localStorage.setItem("musicService", service);
+  document.querySelectorAll(".service-toggle button").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.service === service);
+  });
+}
 
 // Försöker öppna Tidal-appen via tidal://-länken. Om appen inte finns installerad
 // händer inget (custom URI-scheman har ingen inbyggd fallback), så vi märker det
@@ -788,7 +817,7 @@ const TIDAL_LINKS = {
 // Försöker öppna Tidal-appen. Custom URI-scheman har ingen inbyggd fallback, och Tidal
 // dokumenterar inte sitt appschema publikt — därför testas flera kandidatformat i tur
 // och ordning, och först om inget av dem tar över öppnas webbversionen.
-function openTidal(appUrls, webUrl){
+function openMusicApp(appUrls, webUrl){
   const candidates = Array.isArray(appUrls) ? appUrls : [appUrls];
   let handedOff = false;
   const markHandedOff = ()=>{ handedOff = true; };
@@ -880,8 +909,12 @@ function renderPage(preserveOffsetPx){
   document.getElementById("pageCounter").textContent = `${pageIndex+1}/${PAGES.length}`;
   const tidalLinkEl = document.getElementById("tidalLink");
   tidalLinkEl.onclick = ()=>{
-    const t = TIDAL_LINKS[page.kind];
-    openTidal(t.app, t.web);
+    const links = PLAYLIST_LINKS[MUSIC_SERVICE][page.kind];
+    if(!links){
+      alert("Ingen Spotify-spellista kopplad än för den här scenen.");
+      return;
+    }
+    openMusicApp(links.app, links.web);
   };
   document.getElementById("prevPage").disabled = pageIndex === 0;
   document.getElementById("nextPage").disabled = pageIndex === PAGES.length - 1;
@@ -972,11 +1005,15 @@ function renderPage(preserveOffsetPx){
       el.addEventListener("click", ()=> cycle(el));
       el.querySelector(".tidal-link").addEventListener("click", (e)=>{
         e.stopPropagation();
+        const q = encodeURIComponent(name);
+        if(MUSIC_SERVICE === "spotify"){
+          openMusicApp(`spotify:search:${q}`, `https://open.spotify.com/search/${q}`);
+          return;
+        }
         const artistId = TIDAL_ARTIST_IDS[name];
         if(artistId){
-          openTidal(`tidal://artist/${artistId}`, `https://tidal.com/browse/artist/${artistId}`);
+          openMusicApp(`tidal://artist/${artistId}`, `https://tidal.com/browse/artist/${artistId}`);
         } else {
-          const q = encodeURIComponent(name);
           window.open(`https://tidal.com/search?q=${q}`, "_blank", "noopener");
         }
       });
@@ -1027,6 +1064,11 @@ document.addEventListener("touchend", (e)=>{
 }, {passive:true});
 
 renderPage(null);
+setMusicService(MUSIC_SERVICE);
+
+document.querySelectorAll(".service-toggle button").forEach(btn=>{
+  btn.addEventListener("click", ()=> setMusicService(btn.dataset.service));
+});
 
 const infoOverlay = document.getElementById("infoOverlay");
 document.getElementById("infoBtn").addEventListener("click", ()=> infoOverlay.classList.add("open"));
