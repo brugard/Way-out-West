@@ -50,6 +50,12 @@
     font-family:'Archivo',sans-serif; letter-spacing:0; padding:0;
   }
   #compareBtn.active{ background:var(--pink); color:var(--ink); }
+  #mapBtn{
+    background:none; border:1px solid var(--pink); color:var(--pink);
+    width:22px; height:22px; border-radius:50%; padding:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  #mapBtn svg{ width:13px; height:13px; }
   .day-switch{
     display:flex; align-items:center; gap:10px; margin:2px 0 10px;
   }
@@ -244,6 +250,33 @@
   }
   .block.compare-dim{ opacity:.15; }
   .block.compare-match{ box-shadow: 0 0 0 3px #4fa8ff inset; }
+  .map-sheet{ padding:0; max-height:88vh; }
+  .map-sheet-inner{ padding:20px 20px 20px; }
+  #venueMap{ width:100%; height:340px; background:var(--line); }
+  .map-legend{ font-size:12px; color:#726c5c; font-weight:600; margin-top:10px; line-height:1.5; }
+  .map-selection{
+    display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; font-weight:700;
+    min-height:20px;
+  }
+  .map-selection .dot{ width:10px; height:10px; border-radius:50%; background:var(--pink); flex:none; }
+  .map-selection .empty{ color:#a8a196; font-weight:600; }
+  .map-modes{ display:flex; gap:8px; margin-top:14px; }
+  .map-modes button{
+    flex:1; font-family:'Archivo',sans-serif; font-weight:800; font-size:13px;
+    padding:11px; border-radius:10px; border:none; background:var(--pink); color:var(--ink);
+    cursor:pointer; text-transform:uppercase; opacity:.35; pointer-events:none;
+  }
+  .map-modes button.ready{ opacity:1; pointer-events:auto; }
+  .map-clear{
+    display:block; width:100%; margin-top:8px; background:none; color:#726c5c;
+    border:1px solid var(--line); font-family:'Archivo',sans-serif; font-weight:700; font-size:12px;
+    padding:9px; border-radius:10px; cursor:pointer; text-transform:uppercase;
+  }
+  .leaflet-marker-pink .pin-dot{
+    width:16px; height:16px; border-radius:50% 50% 50% 0; background:var(--ink);
+    border:2px solid var(--pink); transform:rotate(-45deg); box-sizing:border-box;
+  }
+  .leaflet-marker-pink.selected .pin-dot{ background:var(--pink); border-color:var(--ink); }
   .search-input{
     width:100%; box-sizing:border-box; font-family:'Archivo',sans-serif; font-weight:600;
     font-size:16px; padding:11px 14px; border-radius:10px; border:1.5px solid var(--line);
@@ -265,11 +298,12 @@
   }
   .block.pulse{ animation:blockPulse 1.4s ease-in-out 2; }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 </head>
 <body>
 
 <header>
-  <div class="eyebrow"><span>Slottsskogen & klubbarna</span><span class="eyebrow-right"><button id="compareBtn" aria-label="Jämför med kompis">⇄</button><button id="searchBtn" aria-label="Sök artist">⌕</button><button id="infoBtn" aria-label="Om appen">i</button><span id="pageCounter">1/6</span></span></div>
+  <div class="eyebrow"><span>Slottsskogen & klubbarna</span><span class="eyebrow-right"><button id="mapBtn" aria-label="Karta SOW"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></button><button id="compareBtn" aria-label="Jämför med kompis">⇄</button><button id="searchBtn" aria-label="Sök artist">⌕</button><button id="infoBtn" aria-label="Om appen">i</button><span id="pageCounter">1/6</span></span></div>
   <div class="day-switch">
     <button id="prevPage" aria-label="Föregående">‹</button>
     <h1 id="pageTitle">Torsdag<span class="sub">Way Out West</span></h1>
@@ -295,6 +329,7 @@
       <li>Byter du mellan WOW och SOW samma dag hamnar du på samma klockslag som du precis tittade på — svepningen är tidssynkad.</li>
       <li>Tryck på lupp-ikonen för att söka upp en artist och hoppa direkt till rätt ställe i schemat.</li>
       <li>Tryck på ⇄ för att jämföra ditt schema med en kompis delade länk — se det ni har gemensamt, bara dina egna val, eller bara kompisens.</li>
+      <li>Tryck på kart-nålen för att se SOW-klubbarna på en karta. Välj två för att få gång- eller cykelväg mellan dem.</li>
       <li>Tryck på en konsert för att växla status: neutral → bra → bäst → neutral igen.</li>
       <li>Tryck på ♫ i hörnet av ett block för att söka upp artisten i din valda musiktjänst.</li>
       <li>Den rosa pillen "♫ Spellista" öppnar hela spellistan för den scenen du är på (WOW eller SOW).</li>
@@ -343,6 +378,25 @@
   </div>
 </div>
 
+<div class="info-overlay" id="mapOverlay">
+  <div class="info-sheet map-sheet">
+    <div class="map-sheet-inner">
+      <h2>Klubbarna på kartan</h2>
+      <p class="pitch">Tryck på två klubbar för att få gång- eller cykelväg mellan dem.</p>
+    </div>
+    <div id="venueMap"></div>
+    <div class="map-sheet-inner">
+      <div class="map-selection" id="mapSelection"><span class="empty">Ingen klubb vald än</span></div>
+      <div class="map-modes">
+        <button id="mapWalkBtn">🚶 Gång</button>
+        <button id="mapBikeBtn">🚲 Cykel</button>
+      </div>
+      <button class="map-clear" id="mapClearBtn">Rensa val</button>
+      <button class="info-close" id="mapClose">Stäng</button>
+    </div>
+  </div>
+</div>
+
 <div class="scroller">
   <div class="grid" id="grid"></div>
 </div>
@@ -356,6 +410,7 @@
   <input type="file" id="importInput" accept="application/json,text/plain,.json,.txt" style="display:none">
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const PX_PER_MIN = 1.8; // samma skala för WOW och SOW så en timme ser lika hög ut överallt
 
@@ -1231,6 +1286,105 @@ document.getElementById("compareExitBtn").addEventListener("click", ()=>{
   document.getElementById("compareBtn").classList.remove("active");
   compareOverlay.classList.remove("open");
   renderPage(getCurrentGridOffsetPx());
+});
+
+// --- Karta över SOW-klubbarna (+ Slottsskogen som referenspunkt för WOW) ---
+const SOW_VENUES = [
+  { name:"Slottsskogen",  address:"Slottsskogen, Göteborg",            lat:57.6870, lng:11.9419 },
+  { name:"Pustervik",     address:"Järntorgsgatan 12, Göteborg",       lat:57.7006, lng:11.9543 },
+  { name:"Folkteatern",   address:"Olof Palmes Plats 1, Göteborg",     lat:57.7012, lng:11.9569 },
+  { name:"Musikens Hus",  address:"Djurgårdsgatan 13, Göteborg",       lat:57.6978, lng:11.9367 },
+  { name:"Skeppet",       address:"Amerikagatan 2, Göteborg",          lat:57.6976, lng:11.9384 },
+  { name:"Annedalskyrkan",address:"Albin Holms Backe 10, Göteborg",    lat:57.6889, lng:11.9535 },
+  { name:"Filmstudion",   address:"Polstjärnegatan 10, Göteborg",      lat:57.7080, lng:11.9285 },
+  { name:"Konserthuset",  address:"Götaplatsen, Göteborg",             lat:57.6959, lng:11.9877 },
+  { name:"Bananpiren",    address:"Södra Frihamnspiren 1, Göteborg",   lat:57.7190, lng:11.9610 },
+];
+
+let venueMap = null;
+let venueMarkers = [];
+let mapSelected = [];
+
+function initVenueMap(){
+  if(venueMap) return;
+  venueMap = L.map("venueMap", { zoomControl:true }).setView([57.703, 11.955], 12.3);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap",
+    maxZoom: 19,
+  }).addTo(venueMap);
+
+  SOW_VENUES.forEach((venue, i)=>{
+    const icon = L.divIcon({
+      className: "leaflet-marker-pink",
+      html: '<div class="pin-dot"></div>',
+      iconSize: [16,16],
+      iconAnchor: [8,15],
+    });
+    const marker = L.marker([venue.lat, venue.lng], { icon }).addTo(venueMap);
+    marker.bindTooltip(venue.name, { direction:"top", offset:[0,-8] });
+    marker.on("click", ()=> toggleVenueSelect(i));
+    venueMarkers.push(marker);
+  });
+
+  setTimeout(()=> venueMap.invalidateSize(), 100);
+}
+
+function toggleVenueSelect(i){
+  const pos = mapSelected.indexOf(i);
+  if(pos !== -1){
+    mapSelected.splice(pos,1);
+  } else {
+    if(mapSelected.length >= 2) mapSelected.shift();
+    mapSelected.push(i);
+  }
+  venueMarkers.forEach((m,idx)=>{
+    const wrap = m.getElement();
+    if(wrap) wrap.classList.toggle("selected", mapSelected.includes(idx));
+  });
+  updateMapSelectionUI();
+}
+
+function updateMapSelectionUI(){
+  const el = document.getElementById("mapSelection");
+  const walkBtn = document.getElementById("mapWalkBtn");
+  const bikeBtn = document.getElementById("mapBikeBtn");
+  if(mapSelected.length === 0){
+    el.innerHTML = '<span class="empty">Ingen klubb vald än</span>';
+  } else if(mapSelected.length === 1){
+    el.innerHTML = `<span class="dot"></span> ${SOW_VENUES[mapSelected[0]].name} <span class="empty">— välj en till</span>`;
+  } else {
+    el.innerHTML = `<span class="dot"></span> ${SOW_VENUES[mapSelected[0]].name} → ${SOW_VENUES[mapSelected[1]].name}`;
+  }
+  const ready = mapSelected.length === 2;
+  walkBtn.classList.toggle("ready", ready);
+  bikeBtn.classList.toggle("ready", ready);
+}
+
+function openDirections(mode){
+  if(mapSelected.length !== 2) return;
+  const a = SOW_VENUES[mapSelected[0]].address;
+  const b = SOW_VENUES[mapSelected[1]].address;
+  const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(a)}&destination=${encodeURIComponent(b)}&travelmode=${mode}`;
+  window.open(url, "_blank", "noopener");
+}
+
+document.getElementById("mapWalkBtn").addEventListener("click", ()=> openDirections("walking"));
+document.getElementById("mapBikeBtn").addEventListener("click", ()=> openDirections("bicycling"));
+document.getElementById("mapClearBtn").addEventListener("click", ()=>{
+  mapSelected = [];
+  venueMarkers.forEach(m=> m.getElement()?.classList.remove("selected"));
+  updateMapSelectionUI();
+});
+
+const mapOverlay = document.getElementById("mapOverlay");
+document.getElementById("mapBtn").addEventListener("click", ()=>{
+  mapOverlay.classList.add("open");
+  initVenueMap();
+  setTimeout(()=> venueMap && venueMap.invalidateSize(), 50);
+});
+document.getElementById("mapClose").addEventListener("click", ()=> mapOverlay.classList.remove("open"));
+mapOverlay.addEventListener("click", (e)=>{
+  if(e.target === mapOverlay) mapOverlay.classList.remove("open");
 });
 
 function jumpToResult(r){
