@@ -273,9 +273,11 @@
     padding:9px; border-radius:10px; cursor:pointer; text-transform:uppercase;
   }
   .leaflet-marker-pink .pin-dot{
-    width:16px; height:16px; border-radius:50% 50% 50% 0; background:var(--ink);
+    width:30px; height:30px; border-radius:50% 50% 50% 0; background:var(--paper);
     border:2px solid var(--pink); transform:rotate(-45deg); box-sizing:border-box;
+    display:flex; align-items:center; justify-content:center; font-size:15px; line-height:1;
   }
+  .leaflet-marker-pink .pin-dot span{ transform:rotate(45deg); display:block; }
   .leaflet-marker-pink.selected .pin-dot{ background:var(--pink); border-color:var(--ink); }
   .search-input{
     width:100%; box-sizing:border-box; font-family:'Archivo',sans-serif; font-weight:600;
@@ -1290,15 +1292,15 @@ document.getElementById("compareExitBtn").addEventListener("click", ()=>{
 
 // --- Karta över SOW-klubbarna (+ Slottsskogen som referenspunkt för WOW) ---
 const SOW_VENUES = [
-  { name:"Slottsskogen",  address:"Slottsskogen, Göteborg",            lat:57.6870, lng:11.9419 },
-  { name:"Pustervik",     address:"Järntorgsgatan 12, Göteborg",       lat:57.7006, lng:11.9543 },
-  { name:"Folkteatern",   address:"Olof Palmes Plats 1, Göteborg",     lat:57.7012, lng:11.9569 },
-  { name:"Musikens Hus",  address:"Djurgårdsgatan 13, Göteborg",       lat:57.6978, lng:11.9367 },
-  { name:"Skeppet",       address:"Amerikagatan 2, Göteborg",          lat:57.6976, lng:11.9384 },
-  { name:"Annedalskyrkan",address:"Albin Holms Backe 10, Göteborg",    lat:57.6889, lng:11.9535 },
-  { name:"Filmstudion",   address:"Polstjärnegatan 10, Göteborg",      lat:57.7080, lng:11.9285 },
-  { name:"Konserthuset",  address:"Götaplatsen, Göteborg",             lat:57.6959, lng:11.9877 },
-  { name:"Bananpiren",    address:"Södra Frihamnspiren 1, Göteborg",   lat:57.7190, lng:11.9610 },
+  { name:"Slottsskogen",  address:"Slottsskogen, Göteborg",            lat:57.6870, lng:11.9419, icon:"🌳" },
+  { name:"Pustervik",     address:"Järntorgsgatan 12, Göteborg",       lat:57.7006, lng:11.9543, icon:"🎧" },
+  { name:"Folkteatern",   address:"Olof Palmes Plats 1, Göteborg",     lat:57.7012, lng:11.9569, icon:"🎭" },
+  { name:"Musikens Hus",  address:"Djurgårdsgatan 13, Göteborg",       lat:57.6978, lng:11.9367, icon:"🎵" },
+  { name:"Skeppet",       address:"Amerikagatan 2, Göteborg",          lat:57.6976, lng:11.9384, icon:"🚢" },
+  { name:"Annedalskyrkan",address:"Albin Holms Backe 10, Göteborg",    lat:57.6889, lng:11.9535, icon:"⛪" },
+  { name:"Filmstudion",   address:"Polstjärnegatan 10, Göteborg",      lat:57.7080, lng:11.9285, icon:"🎬" },
+  { name:"Konserthuset",  address:"Götaplatsen, Göteborg",             lat:57.6959, lng:11.9877, icon:"🎻" },
+  { name:"Bananpiren",    address:"Södra Frihamnspiren 1, Göteborg",   lat:57.7190, lng:11.9610, icon:"🍌" },
 ];
 
 let venueMap = null;
@@ -1316,9 +1318,9 @@ function initVenueMap(){
   SOW_VENUES.forEach((venue, i)=>{
     const icon = L.divIcon({
       className: "leaflet-marker-pink",
-      html: '<div class="pin-dot"></div>',
-      iconSize: [16,16],
-      iconAnchor: [8,15],
+      html: `<div class="pin-dot"><span>${venue.icon}</span></div>`,
+      iconSize: [30,30],
+      iconAnchor: [15,28],
     });
     const marker = L.marker([venue.lat, venue.lng], { icon }).addTo(venueMap);
     marker.bindTooltip(venue.name, { direction:"top", offset:[0,-8] });
