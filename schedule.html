@@ -753,6 +753,9 @@ function buildZoneGradient(page, totalH){
     ${ZONE_COLORS.night} ${wowEndPx}px, ${ZONE_COLORS.night} ${totalH}px)`;
 }
 
+// Artister utan musik att hitta på Tidal eller Spotify — visa ingen musiklänk för dem.
+const NO_MUSIC_LINK = new Set(["Marble", "Joolz", "Parsa", "Roni", "Mohajer", "GB", "Kimia & Thilly", "Saoirse b2b Leon Vynehall"]);
+
 const TIDAL_ARTIST_IDS = {
   "9entle": "65673717",
   "A Good Year": "45831095",
@@ -785,7 +788,7 @@ const TIDAL_ARTIST_IDS = {
   "Dove Ellis": "38691383",
   "Earl Sweatshirt": "4774205",
   "Elise Elvira": "9097701",
-  "Esther": "3532735",
+  "Esther": "76143779",
   "Ezra Collective": "9313524",
   "Fanny Avonne": "57944847",
   "Fantasy of a Broken Heart": "18685281",
@@ -813,7 +816,7 @@ const TIDAL_ARTIST_IDS = {
   "Joolz": "3606789",
   "Josh Caffé": "10590217",
   "Joshua Idehen": "5919579",
-  "Kasino": "3883206",
+  "Kasino": "71137006",
   "Kettama": "10098411",
   "Kid08": "56485122",
   "Killen.": "46073197",
@@ -1119,10 +1122,11 @@ function renderPage(preserveOffsetPx){
         <div class="t">${time}</div>
         <div class="n">${name}</div>
         ${sub ? `<div class="sub">${sub}</div>` : ""}
-        <span class="tidal-link">♫</span>
+        ${NO_MUSIC_LINK.has(name) ? "" : `<span class="tidal-link">♫</span>`}
       `;
       el.addEventListener("click", ()=> cycle(el));
-      el.querySelector(".tidal-link").addEventListener("click", (e)=>{
+      const tidalLinkEl = el.querySelector(".tidal-link");
+      if(tidalLinkEl) tidalLinkEl.addEventListener("click", (e)=>{
         e.stopPropagation();
         const q = encodeURIComponent(name);
         if(MUSIC_SERVICE === "spotify"){
