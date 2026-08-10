@@ -252,7 +252,21 @@
   .block.compare-match{ box-shadow: 0 0 0 3px #4fa8ff inset; }
   .map-sheet{ padding:0; max-height:88vh; }
   .map-sheet-inner{ padding:20px 20px 20px; }
+  .map-wrap{ position:relative; }
   #venueMap{ width:100%; height:340px; background:var(--line); }
+  #locateBtn{
+    position:absolute; top:10px; right:10px; z-index:500;
+    width:34px; height:34px; border-radius:50%; background:var(--paper);
+    border:1.5px solid var(--ink); color:var(--ink); display:flex; align-items:center;
+    justify-content:center; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.25);
+  }
+  #locateBtn svg{ width:17px; height:17px; }
+  #locateBtn.active{ background:#4fa8ff; border-color:#4fa8ff; color:#fff; }
+  .leaflet-marker-me .me-dot{
+    width:16px; height:16px; border-radius:50%; background:#4fa8ff;
+    border:3px solid var(--paper); box-shadow:0 0 0 2px #4fa8ff;
+  }
+  .leaflet-marker-me.selected .me-dot{ box-shadow:0 0 0 4px var(--pink); }
   .map-legend{ font-size:12px; color:#726c5c; font-weight:600; margin-top:10px; line-height:1.5; }
   .map-selection{
     display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; font-weight:700;
@@ -331,7 +345,7 @@
       <li>Byter du mellan WOW och SOW samma dag hamnar du på samma klockslag som du precis tittade på — svepningen är tidssynkad.</li>
       <li>Tryck på lupp-ikonen för att söka upp en artist och hoppa direkt till rätt ställe i schemat.</li>
       <li>Tryck på ⇄ för att jämföra ditt schema med en kompis delade länk — se det ni har gemensamt, bara dina egna val, eller bara kompisens.</li>
-      <li>Tryck på kart-nålen för att se SOW-klubbarna på en karta. Välj två för att få gång- eller cykelväg mellan dem.</li>
+      <li>Tryck på kart-nålen för att se SOW-klubbarna på en karta. Tryck på plats-ikonen i kartan för att lägga till din egen position, och välj sen två punkter för att få gång- eller cykelväg mellan dem.</li>
       <li>Tryck på en konsert för att växla status: neutral → bra → bäst → neutral igen.</li>
       <li>Tryck på ♫ i hörnet av ett block för att söka upp artisten i din valda musiktjänst.</li>
       <li>Den rosa pillen "♫ Spellista" öppnar hela spellistan för den scenen du är på (WOW eller SOW).</li>
@@ -343,6 +357,7 @@
       <button data-service="tidal">Tidal</button>
       <button data-service="spotify">Spotify</button>
     </div>
+    <p class="pitch" style="margin-top:8px; margin-bottom:0;">Fungerar bäst med Tidal — de flesta artisterna är kopplade direkt, medan Spotify bara söker på namnet och ibland hittar fel artist.</p>
 
     <h3>Bakgrundsfärg</h3>
     <div class="swatches">
@@ -384,9 +399,12 @@
   <div class="info-sheet map-sheet">
     <div class="map-sheet-inner">
       <h2>Klubbarna på kartan</h2>
-      <p class="pitch">Tryck på två klubbar för att få gång- eller cykelväg mellan dem.</p>
+      <p class="pitch">Tryck på två punkter för att få gång- eller cykelväg mellan dem — din egen position kan vara en av dem.</p>
     </div>
-    <div id="venueMap"></div>
+    <div class="map-wrap">
+      <div id="venueMap"></div>
+      <button id="locateBtn" aria-label="Visa min position"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
     <div class="map-sheet-inner">
       <div class="map-selection" id="mapSelection"><span class="empty">Ingen klubb vald än</span></div>
       <div class="map-modes">
@@ -1307,9 +1325,26 @@ const SOW_VENUES = [
   { name:"Bananpiren",    address:"Södra Frihamnspiren 1, Göteborg",   lat:57.7190, lng:11.9610, icon:"🍌" },
 ];
 
+// Mutable kopia — kan få "Min position" tillagd i slutet vid behov
+let MAP_POINTS = SOW_VENUES.map(v=> ({...v}));
+
 let venueMap = null;
 let venueMarkers = [];
 let mapSelected = [];
+let myLocationIdx = -1;
+
+function addVenueMarker(point, i){
+  const icon = L.divIcon({
+    className: "leaflet-marker-pink",
+    html: `<div class="pin-dot"><span>${point.icon}</span></div>`,
+    iconSize: [30,30],
+    iconAnchor: [15,28],
+  });
+  const marker = L.marker([point.lat, point.lng], { icon }).addTo(venueMap);
+  marker.bindTooltip(point.name, { direction:"top", offset:[0,-8] });
+  marker.on("click", ()=> toggleVenueSelect(i));
+  venueMarkers[i] = marker;
+}
 
 function initVenueMap(){
   if(venueMap) return;
@@ -1319,21 +1354,46 @@ function initVenueMap(){
     maxZoom: 19,
   }).addTo(venueMap);
 
-  SOW_VENUES.forEach((venue, i)=>{
-    const icon = L.divIcon({
-      className: "leaflet-marker-pink",
-      html: `<div class="pin-dot"><span>${venue.icon}</span></div>`,
-      iconSize: [30,30],
-      iconAnchor: [15,28],
-    });
-    const marker = L.marker([venue.lat, venue.lng], { icon }).addTo(venueMap);
-    marker.bindTooltip(venue.name, { direction:"top", offset:[0,-8] });
-    marker.on("click", ()=> toggleVenueSelect(i));
-    venueMarkers.push(marker);
-  });
+  MAP_POINTS.forEach((point, i)=> addVenueMarker(point, i));
 
   setTimeout(()=> venueMap.invalidateSize(), 100);
 }
+
+function locateMe(){
+  if(!navigator.geolocation){
+    alert("Den här enheten stödjer inte platsdelning.");
+    return;
+  }
+  const btn = document.getElementById("locateBtn");
+  btn.classList.add("active");
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      const { latitude, longitude } = pos.coords;
+      if(myLocationIdx !== -1){
+        venueMarkers[myLocationIdx].setLatLng([latitude, longitude]);
+      } else {
+        myLocationIdx = MAP_POINTS.length;
+        MAP_POINTS.push({ name:"Min position", address:`${latitude},${longitude}`, lat:latitude, lng:longitude, isMe:true });
+        const icon = L.divIcon({
+          className: "leaflet-marker-me",
+          html: '<div class="me-dot"></div>',
+          iconSize: [16,16],
+          iconAnchor: [8,8],
+        });
+        const marker = L.marker([latitude, longitude], { icon }).addTo(venueMap);
+        marker.bindTooltip("Min position", { direction:"top", offset:[0,-8] });
+        marker.on("click", ()=> toggleVenueSelect(myLocationIdx));
+        venueMarkers[myLocationIdx] = marker;
+      }
+      venueMap.setView([latitude, longitude], Math.max(venueMap.getZoom(), 13));
+    },
+    (err)=>{
+      alert("Kunde inte hämta din position. Kontrollera att platsdelning är tillåtet för webbläsaren.");
+    },
+    { enableHighAccuracy:true, timeout:10000 }
+  );
+}
+document.getElementById("locateBtn").addEventListener("click", locateMe);
 
 function toggleVenueSelect(i){
   const pos = mapSelected.indexOf(i);
@@ -1357,9 +1417,9 @@ function updateMapSelectionUI(){
   if(mapSelected.length === 0){
     el.innerHTML = '<span class="empty">Ingen klubb vald än</span>';
   } else if(mapSelected.length === 1){
-    el.innerHTML = `<span class="dot"></span> ${SOW_VENUES[mapSelected[0]].name} <span class="empty">— välj en till</span>`;
+    el.innerHTML = `<span class="dot"></span> ${MAP_POINTS[mapSelected[0]].name} <span class="empty">— välj en till</span>`;
   } else {
-    el.innerHTML = `<span class="dot"></span> ${SOW_VENUES[mapSelected[0]].name} → ${SOW_VENUES[mapSelected[1]].name}`;
+    el.innerHTML = `<span class="dot"></span> ${MAP_POINTS[mapSelected[0]].name} → ${MAP_POINTS[mapSelected[1]].name}`;
   }
   const ready = mapSelected.length === 2;
   walkBtn.classList.toggle("ready", ready);
@@ -1368,8 +1428,8 @@ function updateMapSelectionUI(){
 
 function openDirections(mode){
   if(mapSelected.length !== 2) return;
-  const a = SOW_VENUES[mapSelected[0]].address;
-  const b = SOW_VENUES[mapSelected[1]].address;
+  const a = MAP_POINTS[mapSelected[0]].address;
+  const b = MAP_POINTS[mapSelected[1]].address;
   const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(a)}&destination=${encodeURIComponent(b)}&travelmode=${mode}`;
   window.open(url, "_blank", "noopener");
 }
