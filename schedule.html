@@ -350,7 +350,7 @@
       <li>Tryck på en konsert för att växla status: neutral → bra → bäst → neutral igen.</li>
       <li>Tryck på ♫ i hörnet av ett block för att söka upp artisten i din valda musiktjänst.</li>
       <li>Den rosa pillen "♫ Spellista" öppnar hela spellistan för den scenen du är på (WOW eller SOW).</li>
-      <li>Ikonerna längst ner: ↗ delar en länk med dina val, ↓ sparar dina val till en fil, ↑ läser in en sparad fil igen.</li>
+      <li>Ikonerna längst ner: ↗ delar en kod med dina val (klistras in i jämför-panelen ⇄), ↓ sparar dina val till en fil, ↑ läser in en sparad fil igen.</li>
     </ul>
 
     <h3>Musiktjänst</h3>
@@ -773,7 +773,7 @@ function buildZoneGradient(page, totalH){
 }
 
 // Artister utan musik att hitta på Tidal eller Spotify — visa ingen musiklänk för dem.
-const NO_MUSIC_LINK = new Set(["Marble", "Joolz", "Parsa", "Roni", "Mohajer", "GB", "Kimia & Thilly", "Saoirse b2b Leon Vynehall", "Daesta"]);
+const NO_MUSIC_LINK = new Set(["Marble", "Joolz", "Parsa", "Roni", "Mohajer", "GB", "Kimia & Thilly", "Saoirse b2b Leon Vynehall", "Daesta", "Kim Öhman"]);
 
 const TIDAL_ARTIST_IDS = {
   "9entle": "65673717",
@@ -1604,23 +1604,24 @@ function parseShareCodeToMap(code){
 
 document.getElementById("shareBtn").addEventListener("click", async ()=>{
   const code = buildShareCode();
-  const base = window.location.origin + window.location.pathname;
-  const url = code ? `${base}?share=${code}` : base;
-  const shareText = "Mitt Way Out West & Stay Out West-schema:";
+  if(!code){
+    alert("Du har inte markerat något än.");
+    return;
+  }
 
   if(navigator.share){
     try{
-      await navigator.share({ text: shareText, url });
+      await navigator.share({ text: code });
       return;
     }catch(err){
       return; // användaren avbröt delningen
     }
   }
   try{
-    await navigator.clipboard.writeText(`${shareText} ${url}`);
-    alert("Länken är kopierad — klistra in den där du vill dela den.");
+    await navigator.clipboard.writeText(code);
+    alert("Koden är kopierad — klistra in den i jämför-panelen (⇄).");
   }catch(err){
-    prompt("Kopiera länken:", url);
+    prompt("Kopiera koden:", code);
   }
 });
 
