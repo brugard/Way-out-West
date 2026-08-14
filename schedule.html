@@ -101,6 +101,15 @@
     display:grid;
     column-gap: 1.5px;
     width:100%;
+    position:relative;
+  }
+  .doors-line{
+    position:absolute; left:0; right:0; height:0; border-top:2px dashed var(--ink);
+    opacity:.4; z-index:5; pointer-events:none;
+  }
+  .doors-label{
+    position:absolute; left:0; right:2px; text-align:right; font-size:7px; font-weight:800;
+    text-transform:uppercase; color:var(--pink); letter-spacing:.02em;
   }
   .grid.cols-5 .col-name{ font-size:10.5px; }
   .grid.cols-5 .block .n{ font-size:10.8px; }
@@ -523,7 +532,7 @@ const WOW_DAYS = [
         ["13:15","Son Rompe Pera","14:00"],
         ["15:00","Annahstasia","15:45"],
         ["16:30","Qendresa","17:15"],
-        ["18:00","TBA","18:45"],
+        ["18:00","Jacob Alon","18:45"],
         ["19:30","Fcukers","20:15"],
         ["21:00","Lambrini Girls","21:45"],
         ["22:30","Rochelle Jordan","23:15"],
@@ -776,6 +785,7 @@ function buildZoneGradient(page, totalH){
 const NO_MUSIC_LINK = new Set(["Marble", "Joolz", "Parsa", "Roni", "Mohajer", "GB", "Kimia & Thilly", "Saoirse b2b Leon Vynehall", "Daesta", "Kim Öhman"]);
 
 const TIDAL_ARTIST_IDS = {
+  "Jacob Alon": "50118064",
   "9entle": "65673717",
   "A Good Year": "45831095",
   "AJ Tracey": "7442712",
@@ -1110,6 +1120,15 @@ function renderPage(preserveOffsetPx){
     lbl.textContent = String(h).padStart(2,"0")+":00";
     axis.appendChild(lbl);
   }
+  if(page.kind === "wow"){
+    const doorsTop = (page.startMin - page.unionStart) * PX_PER_MIN;
+    const doorsLabel = document.createElement("div");
+    doorsLabel.className = "doors-label";
+    doorsLabel.style.top = (doorsTop + 3) + "px";
+    const dh = Math.floor(page.startMin/60)%24, dm = page.startMin%60;
+    doorsLabel.textContent = `${String(dh).padStart(2,"0")}:${String(dm).padStart(2,"0")}`;
+    axis.appendChild(doorsLabel);
+  }
   grid.appendChild(axis);
 
   page.cols.forEach(col=>{
@@ -1123,6 +1142,14 @@ function renderPage(preserveOffsetPx){
       hl.className = "hourline";
       hl.style.top = ((m-page.unionStart)*PX_PER_MIN) + "px";
       colEl.appendChild(hl);
+    }
+
+    if(page.kind === "wow"){
+      const doorsTop = (page.startMin - page.unionStart) * PX_PER_MIN;
+      const doorsLine = document.createElement("div");
+      doorsLine.className = "doors-line";
+      doorsLine.style.top = doorsTop + "px";
+      colEl.appendChild(doorsLine);
     }
 
     if(page.kind === "sow"){
